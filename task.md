@@ -56,9 +56,9 @@ Each top-level checkbox is scoped to be implementable and independently verifiab
 ## Phase 2 — Core Budget Features (Week 2)
 
 ### Data model
-- [ ] Create `income` table per Section 14 schema
-- [ ] Create `budgets` table per Section 14 schema
-- [ ] Create `budget_categories` table per Section 14 schema
+- [x] Create `income` table per Section 14 schema
+- [x] Create `budgets` table per Section 14 schema
+- [x] Create `budget_categories` table per Section 14 schema
 
 ### Onboarding flow (Section 4, Section 10.3)
 - [ ] Build onboarding Step 1: welcome screen
