@@ -138,7 +138,7 @@ export default function SignupPage() {
           </form>
           <p className="mt-4 text-center text-sm text-muted-foreground">
             Already have an account?{" "}
-            <Link href="/login" className="font-medium text-foreground underline">
+            <Link href="/login" className="font-medium text-primary underline">
               Log in
             </Link>
           </p>
