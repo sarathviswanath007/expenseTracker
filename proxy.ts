@@ -52,12 +52,14 @@ export async function proxy(request: NextRequest) {
   if (!user && matchesPrefix(pathname, PROTECTED_PREFIXES)) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
+    url.search = "";
     return NextResponse.redirect(url);
   }
 
   if (user && matchesPrefix(pathname, AUTH_ONLY_PREFIXES)) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
+    url.search = "";
     return NextResponse.redirect(url);
   }
 

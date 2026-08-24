@@ -74,22 +74,22 @@ Each top-level checkbox is scoped to be implementable and independently verifiab
 - [x] UI: income entry form with recurring toggle (onboarding Step 2)
 
 ### Budget CRUD (Section 5, Section 10.5)
-- [x] API: create budget for a given month/year (`completeOnboarding` creates the current month's budget + categories)
-- [ ] API: update budget (total + category allocations)
-- [ ] API: delete budget
-- [ ] API: copy previous month's budget
-- [x] API: set category-wise limits (`budget_categories.allocated_amount`, set during onboarding)
-- [x] API: set savings targets (`budgets.savings_target`, set during onboarding)
-- [ ] API: set spending alert thresholds (column exists on `budget_categories` with a default; no UI to customize it yet)
-- [ ] UI: Budget Management page — create budget form (onboarding only covers the first/current month; a standalone page for other months is still needed)
-- [ ] UI: Budget Management page — month selector
-- [ ] UI: Budget Management page — category allocation editor
-- [ ] UI: Budget Management page — "copy previous month" action
-- [x] Support multi-currency budgets (INR ₹, GBP £, USD $) (currency picker in onboarding Step 2, enforced by a DB check constraint)
+- [x] API: create budget for a given month/year (`saveBudget` in `services/budget.service.ts`, also used by onboarding)
+- [x] API: update budget (total + category allocations) (`saveBudget` diffs categories: deletes removed, updates changed, inserts new)
+- [x] API: delete budget (`deleteBudget`)
+- [x] API: copy previous month's budget (`copyPreviousMonthBudget` finds the most recent earlier budget and duplicates its categories)
+- [x] API: set category-wise limits (`budget_categories.allocated_amount`)
+- [x] API: set savings targets (`budgets.savings_target`)
+- [x] API: set spending alert thresholds (`budget_categories.alert_threshold_percent`, editable per category in the Budget Management page)
+- [x] UI: Budget Management page — create budget form (`app/budgets/page.tsx` + `components/budget/budget-manager.tsx`)
+- [x] UI: Budget Management page — month selector (month/year dropdowns, reflected in the URL as `?month=&year=`)
+- [x] UI: Budget Management page — category allocation editor (add/rename/remove rows, per-row amount + alert threshold)
+- [x] UI: Budget Management page — "copy previous month" action
+- [x] Support multi-currency budgets (INR ₹, GBP £, USD $) (currency picker, enforced by a DB check constraint)
 
 ### Testing
 - [ ] Unit test: budget planned/actual/remaining calculation logic
-- [ ] Unit test: currency formatting for INR/GBP/USD
+- [x] Unit test: currency formatting for INR/GBP/USD (`tests/unit/format-currency.test.ts`)
 - [ ] API test: budget CRUD endpoints (create/update/delete/copy)
 - [ ] API test: income CRUD endpoints
 - [ ] Integration test: budget + budget_categories persist correctly together

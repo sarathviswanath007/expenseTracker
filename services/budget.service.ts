@@ -28,6 +28,17 @@ function currentMonthYear() {
   return { month: now.getMonth() + 1, year: now.getFullYear() };
 }
 
+async function requireUser() {
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error("You must be logged in.");
+  }
+  return { supabase, user };
+}
+
 export async function getOnboardingStatus() {
   const supabase = await createSupabaseServerClient();
   const {
@@ -120,5 +131,260 @@ export async function completeOnboarding(input: CompleteOnboardingInput) {
     if (categoriesError) throw new Error(categoriesError.message);
   }
 
+  revalidatePath("/dashboard");
+}
+
+export interface BudgetCategoryRecord {
+  id: string;
+  category: string;
+  allocatedAmount: number;
+  alertThresholdPercent: number;
+}
+
+export interface BudgetWithCategories {
+  id: string;
+  month: number;
+  year: number;
+  currency: Currency;
+  totalBudget: number;
+  savingsTarget: number;
+  categories: BudgetCategoryRecord[];
+}
+
+export async function getBudgetForMonth(
+  month: number,
+  year: number,
+): Promise<BudgetWithCategories | null> {
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data: budget, error } = await supabase
+    .from("budgets")
+    .select("id, month, year, currency, total_budget, savings_target")
+    .eq("user_id", user.id)
+    .eq("month", month)
+    .eq("year", year)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!budget) return null;
+
+  const { data: categories, error: categoriesError } = await supabase
+    .from("budget_categories")
+    .select("id, category, allocated_amount, alert_threshold_percent")
+    .eq("budget_id", budget.id)
+    .order("category");
+  if (categoriesError) throw new Error(categoriesError.message);
+
+  return {
+    id: budget.id,
+    month: budget.month,
+    year: budget.year,
+    currency: budget.currency as Currency,
+    totalBudget: Number(budget.total_budget),
+    savingsTarget: Number(budget.savings_target),
+    categories: (categories ?? []).map((c) => ({
+      id: c.id,
+      category: c.category,
+      allocatedAmount: Number(c.allocated_amount),
+      alertThresholdPercent: c.alert_threshold_percent,
+    })),
+  };
+}
+
+export interface SaveBudgetCategoryInput {
+  id?: string;
+  category: string;
+  allocatedAmount: number;
+  alertThresholdPercent: number;
+}
+
+export interface SaveBudgetInput {
+  budgetId?: string;
+  month: number;
+  year: number;
+  currency: Currency;
+  savingsTarget: number;
+  categories: SaveBudgetCategoryInput[];
+}
+
+export async function saveBudget(input: SaveBudgetInput) {
+  const { supabase, user } = await requireUser();
+
+  const totalBudget = input.categories.reduce(
+    (sum, category) => sum + category.allocatedAmount,
+    0,
+  );
+
+  let budgetId = input.budgetId;
+
+  if (budgetId) {
+    const { error } = await supabase
+      .from("budgets")
+      .update({
+        currency: input.currency,
+        total_budget: totalBudget,
+        savings_target: input.savingsTarget,
+      })
+      .eq("id", budgetId)
+      .eq("user_id", user.id);
+    if (error) throw new Error(error.message);
+  } else {
+    const { data, error } = await supabase
+      .from("budgets")
+      .insert({
+        user_id: user.id,
+        month: input.month,
+        year: input.year,
+        currency: input.currency,
+        total_budget: totalBudget,
+        savings_target: input.savingsTarget,
+      })
+      .select("id")
+      .single();
+    if (error) {
+      if (error.code === "23505") {
+        throw new Error("A budget already exists for that month.");
+      }
+      throw new Error(error.message);
+    }
+    budgetId = data.id;
+  }
+
+  const { data: existingCategories, error: existingError } = await supabase
+    .from("budget_categories")
+    .select("id")
+    .eq("budget_id", budgetId);
+  if (existingError) throw new Error(existingError.message);
+
+  const keptIds = new Set(
+    input.categories.filter((c) => c.id).map((c) => c.id as string),
+  );
+  const idsToDelete = (existingCategories ?? [])
+    .map((c) => c.id)
+    .filter((id) => !keptIds.has(id));
+
+  if (idsToDelete.length > 0) {
+    const { error } = await supabase
+      .from("budget_categories")
+      .delete()
+      .in("id", idsToDelete);
+    if (error) throw new Error(error.message);
+  }
+
+  for (const category of input.categories.filter((c) => c.id)) {
+    const { error } = await supabase
+      .from("budget_categories")
+      .update({
+        category: category.category,
+        allocated_amount: category.allocatedAmount,
+        alert_threshold_percent: category.alertThresholdPercent,
+      })
+      .eq("id", category.id);
+    if (error) throw new Error(error.message);
+  }
+
+  const toInsert = input.categories.filter((c) => !c.id);
+  if (toInsert.length > 0) {
+    const { error } = await supabase.from("budget_categories").insert(
+      toInsert.map((category) => ({
+        budget_id: budgetId,
+        category: category.category,
+        allocated_amount: category.allocatedAmount,
+        alert_threshold_percent: category.alertThresholdPercent,
+      })),
+    );
+    if (error) throw new Error(error.message);
+  }
+
+  revalidatePath("/budgets");
+  revalidatePath("/dashboard");
+  return { budgetId };
+}
+
+export async function deleteBudget(budgetId: string) {
+  const { supabase, user } = await requireUser();
+  const { error } = await supabase
+    .from("budgets")
+    .delete()
+    .eq("id", budgetId)
+    .eq("user_id", user.id);
+  if (error) throw new Error(error.message);
+  revalidatePath("/budgets");
+  revalidatePath("/dashboard");
+}
+
+export async function copyPreviousMonthBudget(month: number, year: number) {
+  const { supabase, user } = await requireUser();
+
+  const { data: existing, error: existingError } = await supabase
+    .from("budgets")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("month", month)
+    .eq("year", year)
+    .maybeSingle();
+  if (existingError) throw new Error(existingError.message);
+  if (existing) {
+    throw new Error("This month already has a budget.");
+  }
+
+  const { data: candidates, error: candidatesError } = await supabase
+    .from("budgets")
+    .select("id, month, year, currency, savings_target")
+    .eq("user_id", user.id)
+    .order("year", { ascending: false })
+    .order("month", { ascending: false });
+  if (candidatesError) throw new Error(candidatesError.message);
+
+  const previous = (candidates ?? []).find(
+    (b) => b.year < year || (b.year === year && b.month < month),
+  );
+  if (!previous) {
+    throw new Error("There's no previous budget to copy from.");
+  }
+
+  const { data: categories, error: categoriesError } = await supabase
+    .from("budget_categories")
+    .select("category, allocated_amount, alert_threshold_percent")
+    .eq("budget_id", previous.id);
+  if (categoriesError) throw new Error(categoriesError.message);
+
+  const totalBudget = (categories ?? []).reduce(
+    (sum, c) => sum + Number(c.allocated_amount),
+    0,
+  );
+
+  const { data: newBudget, error: insertError } = await supabase
+    .from("budgets")
+    .insert({
+      user_id: user.id,
+      month,
+      year,
+      currency: previous.currency,
+      total_budget: totalBudget,
+      savings_target: previous.savings_target,
+    })
+    .select("id")
+    .single();
+  if (insertError) throw new Error(insertError.message);
+
+  if (categories && categories.length > 0) {
+    const { error: categoryInsertError } = await supabase
+      .from("budget_categories")
+      .insert(
+        categories.map((c) => ({
+          budget_id: newBudget.id,
+          category: c.category,
+          allocated_amount: c.allocated_amount,
+          alert_threshold_percent: c.alert_threshold_percent,
+        })),
+      );
+    if (categoryInsertError) throw new Error(categoryInsertError.message);
+  }
+
+  revalidatePath("/budgets");
   revalidatePath("/dashboard");
 }
