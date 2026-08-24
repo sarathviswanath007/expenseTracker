@@ -21,8 +21,8 @@ Each top-level checkbox is scoped to be implementable and independently verifiab
 - [ ] Set up GitHub Actions CI skeleton (lint, type-check, build, test)
 
 ### Database
-- [ ] Create `users` table matching the schema in Section 14
-- [ ] Configure Supabase row-level security policies on `users`
+- [x] Create `users` table matching the schema in Section 14
+- [x] Configure Supabase row-level security policies on `users`
 
 ### Authentication
 - [x] Implement email/password registration
