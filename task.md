@@ -29,7 +29,7 @@ Each top-level checkbox is scoped to be implementable and independently verifiab
 - [x] Implement email/password login
 - [ ] Implement Google OAuth login (UI button scaffolded and disabled; deferred — provider not enabled in Supabase yet)
 - [x] Implement forgot-password flow (request link + set-new-password pages)
-- [ ] Implement logout and session handling (session refresh middleware is in place; no logout button yet — no authenticated screen exists to put it on)
+- [x] Implement logout and session handling (`LogoutButton` calls `supabase.auth.signOut()`; `proxy.ts` now redirects unauthenticated visitors away from protected routes and logged-in users away from `/login`/`/signup`)
 
 ### UI design & Landing Page (Section 10.1)
 - [x] Define base design tokens (colors, typography, spacing) in Tailwind config
@@ -61,31 +61,31 @@ Each top-level checkbox is scoped to be implementable and independently verifiab
 - [x] Create `budget_categories` table per Section 14 schema
 
 ### Onboarding flow (Section 4, Section 10.3)
-- [ ] Build onboarding Step 1: welcome screen
-- [ ] Build onboarding Step 2: set monthly income (salary + other income)
-- [ ] Build onboarding Step 3: select financial goals (multi-select)
-- [ ] Build onboarding Step 4: create budget categories (defaults + custom entry)
-- [ ] Build onboarding Step 5: set monthly budget per category
-- [ ] Build onboarding Step 6: complete setup and redirect to dashboard
-- [ ] Persist in-progress onboarding state so a user can resume if interrupted
+- [x] Build onboarding Step 1: welcome screen
+- [x] Build onboarding Step 2: set monthly income (salary + other income)
+- [x] Build onboarding Step 3: select financial goals (multi-select)
+- [x] Build onboarding Step 4: create budget categories (defaults + custom entry)
+- [x] Build onboarding Step 5: set monthly budget per category
+- [x] Build onboarding Step 6: complete setup and redirect to dashboard
+- [x] Persist in-progress onboarding state so a user can resume if interrupted (draft autosaved to `localStorage`, keyed per user; DB writes only happen on final submit so resuming never creates duplicate rows)
 
 ### Income management
-- [ ] API: create/update/delete income entries (with recurring flag)
-- [ ] UI: income entry form with recurring toggle
+- [ ] API: create/update/delete income entries (with recurring flag) — only create exists so far, via `completeOnboarding` in `services/budget.service.ts`. Update/delete need a dedicated income management UI, not yet built.
+- [x] UI: income entry form with recurring toggle (onboarding Step 2)
 
 ### Budget CRUD (Section 5, Section 10.5)
-- [ ] API: create budget for a given month/year
+- [x] API: create budget for a given month/year (`completeOnboarding` creates the current month's budget + categories)
 - [ ] API: update budget (total + category allocations)
 - [ ] API: delete budget
 - [ ] API: copy previous month's budget
-- [ ] API: set category-wise limits
-- [ ] API: set savings targets
-- [ ] API: set spending alert thresholds
-- [ ] UI: Budget Management page — create budget form
+- [x] API: set category-wise limits (`budget_categories.allocated_amount`, set during onboarding)
+- [x] API: set savings targets (`budgets.savings_target`, set during onboarding)
+- [ ] API: set spending alert thresholds (column exists on `budget_categories` with a default; no UI to customize it yet)
+- [ ] UI: Budget Management page — create budget form (onboarding only covers the first/current month; a standalone page for other months is still needed)
 - [ ] UI: Budget Management page — month selector
 - [ ] UI: Budget Management page — category allocation editor
 - [ ] UI: Budget Management page — "copy previous month" action
-- [ ] Support multi-currency budgets (INR ₹, GBP £, USD $)
+- [x] Support multi-currency budgets (INR ₹, GBP £, USD $) (currency picker in onboarding Step 2, enforced by a DB check constraint)
 
 ### Testing
 - [ ] Unit test: budget planned/actual/remaining calculation logic

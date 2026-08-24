@@ -1,7 +1,17 @@
-export default function OnboardingPage() {
-  return (
-    <div className="flex flex-1 items-center justify-center p-16">
-      <p className="text-muted-foreground">Onboarding page — coming soon.</p>
-    </div>
-  );
+import { redirect } from "next/navigation";
+import { getOnboardingStatus } from "@/services/budget.service";
+import { OnboardingWizard } from "@/components/onboarding/onboarding-wizard";
+
+export default async function OnboardingPage() {
+  const { completed, goals, userId } = await getOnboardingStatus();
+
+  if (!userId) {
+    redirect("/login");
+  }
+
+  if (completed) {
+    redirect("/dashboard");
+  }
+
+  return <OnboardingWizard userId={userId} initialGoals={goals} />;
 }
