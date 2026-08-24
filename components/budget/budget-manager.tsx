@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { formatCurrency } from "@/lib/format-currency";
 import { DEFAULT_CATEGORIES } from "@/lib/categories";
+import { MONTH_NAMES } from "@/lib/dates";
 import {
   copyPreviousMonthBudget,
   deleteBudget,
@@ -21,21 +22,6 @@ import {
   type BudgetWithCategories,
 } from "@/services/budget.service";
 import type { Currency } from "@/types/budget";
-
-const MONTH_NAMES = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
 
 interface CategoryRow {
   key: string;

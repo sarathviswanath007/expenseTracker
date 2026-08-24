@@ -136,32 +136,32 @@ Each top-level checkbox is scoped to be implementable and independently verifiab
 ## Phase 4 — Dashboard and Analytics (Week 4)
 
 ### Dashboard (Section 7, Section 10.4)
-- [ ] API: aggregate endpoint for total income/expenses/savings/remaining budget
-- [ ] API: monthly budget utilization calculation
-- [ ] API: top spending category calculation
-- [ ] API: recent transactions list
-- [ ] API: budget-exceeded / threshold alert detection (e.g., 85% used, exceeded)
-- [ ] UI: dashboard summary widgets (income, expenses, savings, remaining)
-- [ ] UI: monthly budget utilization widget
-- [ ] UI: top spending category widget
-- [ ] UI: recent transactions widget
-- [ ] UI: budget exceeded / alert banners
+- [x] API: aggregate endpoint for total income/expenses/savings/remaining budget (`getDashboardSummary`)
+- [x] API: monthly budget utilization calculation (`calculateUtilizationPercent`)
+- [x] API: top spending category calculation (`findTopCategory`)
+- [x] API: recent transactions list (last 5 expenses for the month)
+- [x] API: budget-exceeded / threshold alert detection (e.g., 85% used, exceeded) (`getCategoryAlertStatus`, per-category `alert_threshold_percent`)
+- [x] UI: dashboard summary widgets (income, expenses, savings, remaining)
+- [x] UI: monthly budget utilization widget
+- [x] UI: top spending category widget
+- [x] UI: recent transactions widget
+- [x] UI: budget exceeded / alert banners
 
 ### Analytics Page (Section 10.7)
-- [ ] API: expenses-by-category aggregation
-- [ ] API: monthly spending trend aggregation
-- [ ] API: budget-vs-actual aggregation
-- [ ] API: income-vs-expense aggregation
-- [ ] API: savings trend aggregation
-- [ ] UI: expenses-by-category chart (Recharts)
-- [ ] UI: monthly spending trend chart
-- [ ] UI: budget vs actual chart
-- [ ] UI: income vs expense chart
-- [ ] UI: savings trend chart
+- [x] API: expenses-by-category aggregation (`getExpensesByCategory`)
+- [x] API: monthly spending trend aggregation (`getMonthlySpendingTrend`, trailing 6 months ending on the selected month)
+- [x] API: budget-vs-actual aggregation (`getBudgetVsActual`)
+- [x] API: income-vs-expense aggregation (`getIncomeVsExpense`; recurring income counts every month from its start date, one-time income counts only in its own month)
+- [x] API: savings trend aggregation (`getSavingsTrend`, derived from income-vs-expense)
+- [x] UI: expenses-by-category chart (Recharts) (horizontal bar, ranked; categories beyond the validated 7-color palette fold into "Other" rather than generating new hues)
+- [x] UI: monthly spending trend chart (line)
+- [x] UI: budget vs actual chart (grouped horizontal bar)
+- [x] UI: income vs expense chart (grouped bar over the last 6 months)
+- [x] UI: savings trend chart (line with a zero reference line, since savings can go negative)
 
 ### Testing
-- [ ] Unit test: dashboard aggregation math (totals, utilization %, top category)
-- [ ] Unit test: alert threshold logic (warning vs. exceeded)
+- [x] Unit test: dashboard aggregation math (totals, utilization %, top category) (`tests/unit/dashboard-math.test.ts`)
+- [x] Unit test: alert threshold logic (warning vs. exceeded) (`tests/unit/budget-alerts.test.ts`)
 - [ ] API test: dashboard summary and analytics endpoints
 - [ ] Integration test: dashboard reflects live data immediately after expense changes
 - [ ] UI test: charts render with sample data and update on filter/month change

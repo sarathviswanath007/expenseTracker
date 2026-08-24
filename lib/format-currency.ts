@@ -12,3 +12,12 @@ export function formatCurrency(amount: number, currency: Currency): string {
     currency,
   }).format(amount);
 }
+
+/** Whole-unit currency for chart axis ticks — no cents, so ticks stay clean. */
+export function formatAxisCurrency(amount: number, currency: Currency): string {
+  return new Intl.NumberFormat(LOCALES[currency], {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
