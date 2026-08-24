@@ -43,13 +43,13 @@ Each top-level checkbox is scoped to be implementable and independently verifiab
 
 ### Testing
 - [x] Unit test: registration/login form validation logic (`tests/unit/auth-validation.test.ts`)
-- [ ] API test: registration endpoint (valid input, duplicate email, weak password)
-- [ ] API test: login endpoint (valid credentials, invalid credentials, locked/unknown account)
-- [ ] Integration test: successful auth creates the corresponding `users` row
-- [ ] Security test: password hashing, session/token handling, RLS policy enforcement on `users`
-- [ ] Security test: brute-force / rate-limiting protection on login
+- [ ] API test: registration endpoint (valid input, duplicate email, weak password) — N/A as a custom endpoint: there is no app-owned registration API, the browser calls Supabase Auth directly. Deferred until a local Supabase instance (via `supabase start`, needs Docker) is available to test against safely.
+- [ ] API test: login endpoint (valid credentials, invalid credentials, locked/unknown account) — same as above: delegated entirely to Supabase Auth. Deferred pending local Supabase/Docker.
+- [ ] Integration test: successful auth creates the corresponding `users` row — deferred pending local Supabase/Docker (would otherwise create real accounts in the live project).
+- [ ] Security test: password hashing, session/token handling, RLS policy enforcement on `users` — deferred pending local Supabase/Docker.
+- [ ] Security test: brute-force / rate-limiting protection on login — deferred pending local Supabase/Docker.
 - [x] UI test: landing page renders and Login/Sign Up CTAs navigate correctly (`tests/e2e/home.spec.ts`)
-- [ ] E2E test: user registers, confirms account, and logs in successfully (only client-side validation is covered so far — a real signup wasn't automated to avoid creating test accounts in your live Supabase project)
+- [ ] E2E test: user registers, confirms account, and logs in successfully (only client-side validation is covered so far — a real signup wasn't automated to avoid creating test accounts in your live Supabase project). Deferred pending local Supabase/Docker.
 
 ---
 
