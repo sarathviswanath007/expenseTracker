@@ -1,6 +1,13 @@
 "use client";
 
-import { ArrowDownRight, ArrowUpRight, Minus, type LucideIcon } from "lucide-react";
+import Link from "next/link";
+import {
+  ArrowDownRight,
+  ArrowRight,
+  ArrowUpRight,
+  Minus,
+  type LucideIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/lib/format-currency";
 import type { Currency } from "@/types/budget";
@@ -60,6 +67,7 @@ export function MetricCard({
   percentChange,
   upIsGood,
   tone = "neutral",
+  href,
 }: {
   label: string;
   amount: number;
@@ -68,14 +76,27 @@ export function MetricCard({
   percentChange?: number | null;
   upIsGood?: boolean;
   tone?: "neutral" | "positive" | "critical";
+  /** When set, the whole card becomes a link to the matching detail page. */
+  href?: string;
 }) {
-  return (
-    <div className="flex flex-col gap-2 rounded-xl border border-border bg-card p-4">
+  const body = (
+    <>
       <div className="flex items-center gap-2">
-        <span className="flex size-7 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+        <span
+          className={cn(
+            "flex size-7 items-center justify-center rounded-lg bg-muted text-muted-foreground transition-colors",
+            href && "group-hover:bg-primary/10 group-hover:text-primary-accent",
+          )}
+        >
           <Icon className="size-4" aria-hidden="true" />
         </span>
         <span className="text-sm text-muted-foreground">{label}</span>
+        {href && (
+          <ArrowRight
+            className="ml-auto size-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100"
+            aria-hidden="true"
+          />
+        )}
       </div>
       <p
         className={cn(
@@ -89,6 +110,26 @@ export function MetricCard({
       {percentChange !== undefined && upIsGood !== undefined && (
         <TrendIndicator percentChange={percentChange} upIsGood={upIsGood} />
       )}
-    </div>
+    </>
+  );
+
+  const className =
+    "group flex flex-col gap-2 rounded-xl border border-border bg-card p-4";
+
+  if (!href) {
+    return <div className={className}>{body}</div>;
+  }
+
+  return (
+    <Link
+      href={href}
+      className={cn(
+        className,
+        "transition-colors hover:border-primary/40 hover:bg-primary/[0.02]",
+        "focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+      )}
+    >
+      {body}
+    </Link>
   );
 }

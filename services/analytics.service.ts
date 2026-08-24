@@ -167,6 +167,9 @@ export async function getDashboardSummary(
     { data: recentRows, error: recentError },
     prevCategoryTotalsMap,
     prevTotalIncome,
+    { count: budgetCount },
+    { count: expenseCount },
+    { count: incomeCount },
   ] = await Promise.all([
     getBudgetForMonth(month, year),
     getCategoryTotals(supabase, user.id, start, end),
@@ -182,6 +185,18 @@ export async function getDashboardSummary(
       .limit(5),
     getCategoryTotals(supabase, user.id, prevRange.start, prevRange.end),
     getTotalIncomeForMonth(supabase, user.id, prevMonth, prevYear),
+    supabase
+      .from("budgets")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id),
+    supabase
+      .from("expenses")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id),
+    supabase
+      .from("income")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id),
   ]);
   if (recentError) throw new Error(recentError.message);
 
@@ -244,6 +259,11 @@ export async function getDashboardSummary(
     alerts,
     recentTransactions: (recentRows ?? []).map(mapExpenseRow),
     categoryChanges,
+    setup: {
+      hasAnyBudget: (budgetCount ?? 0) > 0,
+      hasAnyExpense: (expenseCount ?? 0) > 0,
+      hasAnyIncome: (incomeCount ?? 0) > 0,
+    },
     previousMonth: {
       totalIncome: prevTotalIncome,
       totalExpenses: prevTotalExpenses,

@@ -14,7 +14,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { LogoutButton } from "@/components/logout-button";
+import Link from "next/link";
+import { X } from "lucide-react";
 import { completeOnboarding } from "@/services/budget.service";
 import { DEFAULT_CATEGORIES } from "@/lib/categories";
 import type { Currency } from "@/types/budget";
@@ -232,7 +233,14 @@ export function OnboardingWizard({
         <p className="text-sm text-muted-foreground">
           Step {Math.min(draft.step, TOTAL_STEPS)} of {TOTAL_STEPS}
         </p>
-        <LogoutButton />
+        <Button
+          render={<Link href="/dashboard" />}
+          variant="ghost"
+          size="sm"
+        >
+          <X className="size-4" aria-hidden="true" />
+          Skip for now
+        </Button>
       </div>
       <Progress value={(Math.min(draft.step, TOTAL_STEPS) / TOTAL_STEPS) * 100} />
 
@@ -459,13 +467,14 @@ export function OnboardingWizard({
 
       {error && <p className="text-sm text-destructive">{error}</p>}
 
-      {draft.step < 6 && (
+      {/* Step 1 has its own "Get started" call to action, so the Back/Continue
+          footer would only repeat it. */}
+      {draft.step > 1 && draft.step < 6 && (
         <div className="flex justify-between">
           <Button
             type="button"
             variant="ghost"
             onClick={() => goToStep(draft.step - 1)}
-            disabled={draft.step === 1}
           >
             Back
           </Button>

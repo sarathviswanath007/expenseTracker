@@ -23,7 +23,16 @@ export interface DashboardSummary {
   /** Categories with spending in both this month and last, ranked by the size
    * of the change. Ordinary computed deltas — not model-generated advice. */
   categoryChanges: CategoryChange[];
+  /** Whether the account has any data at all, across every month — used to
+   * decide between the first-run setup panel and the normal dashboard. */
+  setup: SetupStatus;
   previousMonth: PreviousMonthTotals;
+}
+
+export interface SetupStatus {
+  hasAnyBudget: boolean;
+  hasAnyExpense: boolean;
+  hasAnyIncome: boolean;
 }
 
 export interface CategoryChange {

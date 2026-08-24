@@ -16,6 +16,7 @@ import { BudgetProgressCard } from "@/components/dashboard/budget-progress-card"
 import { CategoryBreakdown } from "@/components/dashboard/category-breakdown";
 import { TransactionList } from "@/components/dashboard/transaction-list";
 import { InsightsCard } from "@/components/dashboard/insights-card";
+import { GetStartedPanel } from "@/components/dashboard/get-started-panel";
 import { IncomeVsExpenseChart } from "@/components/charts/income-vs-expense-chart";
 import type { DashboardSummary, IncomeVsExpensePoint } from "@/types/analytics";
 
@@ -44,8 +45,10 @@ export function DashboardView({
     );
   }
 
-  const { currency, previousMonth } = summary;
+  const { currency, previousMonth, setup } = summary;
   const comparable = previousMonth.hasData;
+  // A brand-new account gets the setup panel instead of a grid of zeros.
+  const isFirstRun = !setup.hasAnyBudget || !setup.hasAnyExpense;
 
   return (
     <div className="flex flex-col gap-5 p-4 sm:p-6">
@@ -93,6 +96,8 @@ export function DashboardView({
         </div>
       </div>
 
+      {isFirstRun && <GetStartedPanel setup={setup} />}
+
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard
           label="Total income"
@@ -123,6 +128,7 @@ export function DashboardView({
               : null
           }
           upIsGood={false}
+          href="/expenses"
         />
         <MetricCard
           label="Total savings"
@@ -146,37 +152,44 @@ export function DashboardView({
           currency={currency}
           icon={Wallet}
           tone={summary.remainingBudget < 0 ? "critical" : "neutral"}
+          href={`/budgets?month=${month}&year=${year}`}
         />
       </div>
 
-      <InsightsCard
-        alerts={summary.alerts}
-        categoryChanges={summary.categoryChanges}
-        currency={currency}
-        month={month}
-        year={year}
-      />
-
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-        <div className="flex flex-col gap-2 rounded-xl border border-border bg-card p-4 lg:col-span-2">
-          <div>
-            <h2 className="font-medium">Income vs expenses</h2>
-            <p className="text-sm text-muted-foreground">
-              The last six months, ending {MONTH_NAMES[month - 1]} {year}.
-            </p>
-          </div>
-          <IncomeVsExpenseChart data={incomeVsExpense} currency={currency} />
-        </div>
-        <BudgetProgressCard
-          totalBudget={summary.totalBudget}
-          totalExpenses={summary.totalExpenses}
-          remainingBudget={summary.remainingBudget}
-          utilizationPercent={summary.utilizationPercent}
+      {!isFirstRun && (
+        <InsightsCard
+          alerts={summary.alerts}
+          categoryChanges={summary.categoryChanges}
           currency={currency}
           month={month}
           year={year}
         />
-      </div>
+      )}
+
+      {/* Both halves of this row are empty or duplicate the setup panel's CTA
+          until there is a budget and some spending to chart. */}
+      {!isFirstRun && (
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+          <div className="flex flex-col gap-2 rounded-xl border border-border bg-card p-4 lg:col-span-2">
+            <div>
+              <h2 className="font-medium">Income vs expenses</h2>
+              <p className="text-sm text-muted-foreground">
+                The last six months, ending {MONTH_NAMES[month - 1]} {year}.
+              </p>
+            </div>
+            <IncomeVsExpenseChart data={incomeVsExpense} currency={currency} />
+          </div>
+          <BudgetProgressCard
+            totalBudget={summary.totalBudget}
+            totalExpenses={summary.totalExpenses}
+            remainingBudget={summary.remainingBudget}
+            utilizationPercent={summary.utilizationPercent}
+            currency={currency}
+            month={month}
+            year={year}
+          />
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
         <CategoryBreakdown

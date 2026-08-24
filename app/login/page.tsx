@@ -42,7 +42,7 @@ export default function LoginPage() {
       setError(signInError.message);
       return;
     }
-    router.push("/onboarding");
+    router.push("/dashboard");
     router.refresh();
   }
 
