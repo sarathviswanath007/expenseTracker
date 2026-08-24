@@ -51,14 +51,7 @@ export function AnalyticsView({
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold">Analytics</h1>
-        <p className="text-muted-foreground text-sm">
-          How your money moved, at a glance.
-        </p>
-      </div>
-
+    <div className="flex flex-col gap-5">
       <div className="flex items-end gap-2">
         <div className="flex flex-col gap-1.5">
           <Label>Month</Label>
@@ -68,8 +61,10 @@ export function AnalyticsView({
               value && changeMonthYear(Number(value), year)
             }
           >
-            <SelectTrigger className="w-40">
-              <SelectValue />
+            <SelectTrigger className="w-40" aria-label="Month">
+              <SelectValue>
+                {(value) => MONTH_NAMES[Number(value) - 1]}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {MONTH_NAMES.map((name, index) => (
@@ -88,7 +83,7 @@ export function AnalyticsView({
               value && changeMonthYear(month, Number(value))
             }
           >
-            <SelectTrigger className="w-28">
+            <SelectTrigger className="w-28" aria-label="Year">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

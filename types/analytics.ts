@@ -20,6 +20,26 @@ export interface DashboardSummary {
   categoryTotals: CategoryTotal[];
   alerts: CategoryAlert[];
   recentTransactions: Expense[];
+  /** Categories with spending in both this month and last, ranked by the size
+   * of the change. Ordinary computed deltas — not model-generated advice. */
+  categoryChanges: CategoryChange[];
+  previousMonth: PreviousMonthTotals;
+}
+
+export interface CategoryChange {
+  category: string;
+  amount: number;
+  previousAmount: number;
+  percentChange: number | null;
+}
+
+export interface PreviousMonthTotals {
+  totalIncome: number;
+  totalExpenses: number;
+  totalSavings: number;
+  /** False when the previous month has no income or expenses recorded, so a
+   * percentage change would be meaningless rather than simply zero. */
+  hasData: boolean;
 }
 
 export interface MonthPoint {

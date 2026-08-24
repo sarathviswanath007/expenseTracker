@@ -18,6 +18,12 @@
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
+  --color-positive: var(--positive);
+  --color-positive-surface: var(--positive-surface);
+  --color-warning: var(--warning);
+  --color-warning-surface: var(--warning-surface);
+  --color-critical: var(--critical);
+  --color-critical-surface: var(--critical-surface);
   --color-chart-8: var(--chart-8);
   --color-chart-7: var(--chart-7);
   --color-chart-6: var(--chart-6);
@@ -78,6 +84,12 @@
   --chart-6: #008300;
   --chart-7: #4a3aa7;
   --chart-8: #e34948;
+  --positive: #06703a;
+  --positive-surface: #e8f5ee;
+  --warning: #8a5a00;
+  --warning-surface: #fdf3e2;
+  --critical: #b3261e;
+  --critical-surface: #fdecea;
   --radius: 0.625rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
@@ -116,6 +128,12 @@
   --chart-6: #008300;
   --chart-7: #9085e9;
   --chart-8: #e66767;
+  --positive: #4ade80;
+  --positive-surface: #0e2a1a;
+  --warning: #fbbf24;
+  --warning-surface: #2e2410;
+  --critical: #f87171;
+  --critical-surface: #2e1616;
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);

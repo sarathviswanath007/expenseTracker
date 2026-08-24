@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  calculatePercentChange,
   calculateRemainingBudget,
   calculateSavings,
   calculateUtilizationPercent,
@@ -37,6 +38,24 @@ describe("calculateSavings", () => {
 
   it("can go negative when spending exceeds income", () => {
     expect(calculateSavings(1000, 1200)).toBe(-200);
+  });
+});
+
+describe("calculatePercentChange", () => {
+  it("computes an increase", () => {
+    expect(calculatePercentChange(110, 100)).toBeCloseTo(10);
+  });
+
+  it("computes a decrease as negative", () => {
+    expect(calculatePercentChange(80, 100)).toBeCloseTo(-20);
+  });
+
+  it("returns null when the previous value is zero", () => {
+    expect(calculatePercentChange(500, 0)).toBeNull();
+  });
+
+  it("handles a negative previous value without flipping the sign", () => {
+    expect(calculatePercentChange(-500, -1000)).toBeCloseTo(50);
   });
 });
 

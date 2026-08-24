@@ -30,7 +30,7 @@ export default async function AnalyticsPage(props: PageProps<"/analytics">) {
   ]);
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col p-6">
+    <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col p-4 sm:p-6">
       <AnalyticsView
         month={month}
         year={year}

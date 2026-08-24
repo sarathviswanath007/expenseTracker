@@ -8,7 +8,7 @@ export default async function BudgetsPage(props: PageProps<"/budgets">) {
   const budget = await getBudgetForMonth(month, year);
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col p-6">
+    <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col p-4 sm:p-6">
       <BudgetManager
         key={`${year}-${month}-${budget?.id ?? "new"}`}
         month={month}

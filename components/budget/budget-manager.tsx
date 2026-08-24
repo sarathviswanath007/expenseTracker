@@ -158,14 +158,7 @@ export function BudgetManager({
   const total = rows.reduce((sum, r) => sum + (Number(r.allocatedAmount) || 0), 0);
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold">Budget Management</h1>
-        <p className="text-muted-foreground text-sm">
-          Plan how much to spend in each category, month by month.
-        </p>
-      </div>
-
+    <div className="flex flex-col gap-5">
       <div className="flex items-end gap-2">
         <div className="flex flex-col gap-1.5">
           <Label>Month</Label>
@@ -173,8 +166,10 @@ export function BudgetManager({
             value={String(month)}
             onValueChange={(value) => changeMonthYear(Number(value), year)}
           >
-            <SelectTrigger className="w-40">
-              <SelectValue />
+            <SelectTrigger className="w-40" aria-label="Month">
+              <SelectValue>
+                {(value) => MONTH_NAMES[Number(value) - 1]}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {MONTH_NAMES.map((name, index) => (
@@ -191,7 +186,7 @@ export function BudgetManager({
             value={String(year)}
             onValueChange={(value) => changeMonthYear(month, Number(value))}
           >
-            <SelectTrigger className="w-28">
+            <SelectTrigger className="w-28" aria-label="Year">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -258,6 +253,12 @@ export function BudgetManager({
 
           <div className="flex flex-col gap-3">
             <Label>Categories</Label>
+            <div className="flex items-end gap-2 text-xs text-muted-foreground">
+              <span className="flex-1">Category</span>
+              <span className="w-28">Budget</span>
+              <span className="w-24">Alert at %</span>
+              <span className="w-[4.5rem]" aria-hidden="true" />
+            </div>
             {rows.map((row) => (
               <div key={row.key} className="flex items-end gap-2">
                 <div className="flex flex-1 flex-col gap-1.5">

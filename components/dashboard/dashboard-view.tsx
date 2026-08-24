@@ -1,14 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
+import { PiggyBank, TrendingDown, TrendingUp, Wallet } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -16,30 +9,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { formatCurrency } from "@/lib/format-currency";
 import { MONTH_NAMES } from "@/lib/dates";
-import type { DashboardSummary } from "@/types/analytics";
-
-function StatCard({ label, value }: { label: string; value: string }) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardDescription>{label}</CardDescription>
-        <CardTitle className="text-2xl">{value}</CardTitle>
-      </CardHeader>
-    </Card>
-  );
-}
+import { calculatePercentChange } from "@/lib/dashboard-math";
+import { MetricCard } from "@/components/dashboard/metric-card";
+import { BudgetProgressCard } from "@/components/dashboard/budget-progress-card";
+import { CategoryBreakdown } from "@/components/dashboard/category-breakdown";
+import { TransactionList } from "@/components/dashboard/transaction-list";
+import { InsightsCard } from "@/components/dashboard/insights-card";
+import { IncomeVsExpenseChart } from "@/components/charts/income-vs-expense-chart";
+import type { DashboardSummary, IncomeVsExpensePoint } from "@/types/analytics";
 
 export function DashboardView({
   month,
   year,
   summary,
+  incomeVsExpense,
 }: {
   month: number;
   year: number;
   summary: DashboardSummary | null;
+  incomeVsExpense: IncomeVsExpensePoint[];
 }) {
   const router = useRouter();
 
@@ -48,32 +37,33 @@ export function DashboardView({
   }
 
   if (!summary) {
-    return <p className="text-muted-foreground">Log in to view your dashboard.</p>;
+    return (
+      <p className="p-6 text-muted-foreground">
+        Log in to view your dashboard.
+      </p>
+    );
   }
 
-  const { currency } = summary;
-  const money = (amount: number) => formatCurrency(amount, currency);
+  const { currency, previousMonth } = summary;
+  const comparable = previousMonth.hasData;
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold">Dashboard</h1>
-        <p className="text-muted-foreground text-sm">
-          Your financial overview for the month.
+    <div className="flex flex-col gap-5 p-4 sm:p-6">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <p className="text-sm text-muted-foreground">
+          Showing {MONTH_NAMES[month - 1]} {year}
         </p>
-      </div>
-
-      <div className="flex items-end gap-2">
-        <div className="flex flex-col gap-1.5">
-          <Label>Month</Label>
+        <div className="flex items-end gap-2">
           <Select
             value={String(month)}
             onValueChange={(value) =>
               value && changeMonthYear(Number(value), year)
             }
           >
-            <SelectTrigger className="w-40">
-              <SelectValue />
+            <SelectTrigger size="sm" className="w-36" aria-label="Month">
+              <SelectValue>
+                {(value) => MONTH_NAMES[Number(value) - 1]}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {MONTH_NAMES.map((name, index) => (
@@ -83,16 +73,13 @@ export function DashboardView({
               ))}
             </SelectContent>
           </Select>
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label>Year</Label>
           <Select
             value={String(year)}
             onValueChange={(value) =>
               value && changeMonthYear(month, Number(value))
             }
           >
-            <SelectTrigger className="w-28">
+            <SelectTrigger size="sm" className="w-24" aria-label="Year">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -106,106 +93,101 @@ export function DashboardView({
         </div>
       </div>
 
-      {summary.alerts.length > 0 && (
-        <div className="flex flex-col gap-2">
-          {summary.alerts.map((alert) => (
-            <div
-              key={alert.category}
-              className={
-                alert.status === "exceeded"
-                  ? "rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
-                  : "rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-700 dark:text-amber-400"
-              }
-            >
-              {alert.status === "exceeded" ? (
-                <>
-                  🔴 Your {alert.category} budget has been exceeded by{" "}
-                  {money(alert.amount - alert.allocatedAmount)}.
-                </>
-              ) : (
-                <>
-                  ⚠️ You have spent{" "}
-                  {Math.round((alert.amount / alert.allocatedAmount) * 100)}%
-                  of your {alert.category} budget.
-                </>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {!summary.totalBudget && summary.alerts.length === 0 && (
-        <p className="text-muted-foreground text-sm">
-          No budget set for {MONTH_NAMES[month - 1]} {year} yet.
-        </p>
-      )}
-
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatCard label="Total income" value={money(summary.totalIncome)} />
-        <StatCard label="Total expenses" value={money(summary.totalExpenses)} />
-        <StatCard label="Total savings" value={money(summary.totalSavings)} />
-        <StatCard
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <MetricCard
+          label="Total income"
+          amount={summary.totalIncome}
+          currency={currency}
+          icon={TrendingUp}
+          percentChange={
+            comparable
+              ? calculatePercentChange(
+                  summary.totalIncome,
+                  previousMonth.totalIncome,
+                )
+              : null
+          }
+          upIsGood
+        />
+        <MetricCard
+          label="Total expenses"
+          amount={summary.totalExpenses}
+          currency={currency}
+          icon={TrendingDown}
+          percentChange={
+            comparable
+              ? calculatePercentChange(
+                  summary.totalExpenses,
+                  previousMonth.totalExpenses,
+                )
+              : null
+          }
+          upIsGood={false}
+        />
+        <MetricCard
+          label="Total savings"
+          amount={summary.totalSavings}
+          currency={currency}
+          icon={PiggyBank}
+          tone={summary.totalSavings < 0 ? "critical" : "positive"}
+          percentChange={
+            comparable
+              ? calculatePercentChange(
+                  summary.totalSavings,
+                  previousMonth.totalSavings,
+                )
+              : null
+          }
+          upIsGood
+        />
+        <MetricCard
           label="Remaining budget"
-          value={money(summary.remainingBudget)}
+          amount={summary.remainingBudget}
+          currency={currency}
+          icon={Wallet}
+          tone={summary.remainingBudget < 0 ? "critical" : "neutral"}
         />
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Monthly budget utilization</CardTitle>
-          <CardDescription>
-            {money(summary.totalExpenses)} of {money(summary.totalBudget)} used
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Progress value={Math.min(100, summary.utilizationPercent)} />
-          <p className="mt-2 text-sm text-muted-foreground">
-            {Math.round(summary.utilizationPercent)}% used
-          </p>
-        </CardContent>
-      </Card>
+      <InsightsCard
+        alerts={summary.alerts}
+        categoryChanges={summary.categoryChanges}
+        currency={currency}
+        month={month}
+        year={year}
+      />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Top spending category</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {summary.topCategory ? (
-            <p>
-              {summary.topCategory.category} —{" "}
-              {money(summary.topCategory.amount)}
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+        <div className="flex flex-col gap-2 rounded-xl border border-border bg-card p-4 lg:col-span-2">
+          <div>
+            <h2 className="font-medium">Income vs expenses</h2>
+            <p className="text-sm text-muted-foreground">
+              The last six months, ending {MONTH_NAMES[month - 1]} {year}.
             </p>
-          ) : (
-            <p className="text-muted-foreground">No expenses yet this month.</p>
-          )}
-        </CardContent>
-      </Card>
+          </div>
+          <IncomeVsExpenseChart data={incomeVsExpense} currency={currency} />
+        </div>
+        <BudgetProgressCard
+          totalBudget={summary.totalBudget}
+          totalExpenses={summary.totalExpenses}
+          remainingBudget={summary.remainingBudget}
+          utilizationPercent={summary.utilizationPercent}
+          currency={currency}
+          month={month}
+          year={year}
+        />
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent transactions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {summary.recentTransactions.length === 0 ? (
-            <p className="text-muted-foreground">No transactions yet.</p>
-          ) : (
-            <ul className="flex flex-col gap-2 text-sm">
-              {summary.recentTransactions.map((expense) => (
-                <li
-                  key={expense.id}
-                  className="flex items-center justify-between border-b pb-2 last:border-0"
-                >
-                  <span>
-                    {expense.expenseDate} · {expense.category}
-                    {expense.description ? ` · ${expense.description}` : ""}
-                  </span>
-                  <span className="font-medium">{money(expense.amount)}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+        <CategoryBreakdown
+          categoryTotals={summary.categoryTotals}
+          currency={currency}
+        />
+        <TransactionList
+          transactions={summary.recentTransactions}
+          currency={currency}
+        />
+      </div>
     </div>
   );
 }

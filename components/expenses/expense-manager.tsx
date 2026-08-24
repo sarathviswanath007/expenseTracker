@@ -13,6 +13,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PAYMENT_METHODS, type PaymentMethod } from "@/lib/categories";
+import { formatCurrency } from "@/lib/format-currency";
+import type { Currency } from "@/types/budget";
 import { getExpenseFormErrors } from "@/lib/expense-validation";
 import {
   createExpense,
@@ -60,8 +62,10 @@ export function ExpenseManager({
   pageSize,
   page,
   filters,
+  currency,
 }: {
   categories: string[];
+  currency: Currency;
   expenses: Expense[];
   total: number;
   pageSize: number;
@@ -202,14 +206,7 @@ export function ExpenseManager({
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold">Expenses</h1>
-        <p className="text-muted-foreground text-sm">
-          Log what you spend and keep it categorized.
-        </p>
-      </div>
-
+    <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-3 rounded-lg border p-4">
         <h2 className="font-medium">Add an expense</h2>
         <div className="flex flex-wrap items-end gap-2">
@@ -305,7 +302,11 @@ export function ExpenseManager({
             }
           >
             <SelectTrigger className="w-full">
-              <SelectValue />
+              <SelectValue>
+                {(value) =>
+                  !value || value === "all" ? "All categories" : String(value)
+                }
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All categories</SelectItem>
@@ -487,7 +488,9 @@ export function ExpenseManager({
                         {expense.expenseDate}
                       </td>
                       <td className="py-2 pr-2">{expense.category}</td>
-                      <td className="py-2 pr-2">{expense.amount}</td>
+                      <td className="py-2 pr-2 tabular-nums">
+                        {formatCurrency(expense.amount, currency)}
+                      </td>
                       <td className="py-2 pr-2">{expense.paymentMethod}</td>
                       <td className="py-2 pr-2">{expense.description}</td>
                       <td className="py-2 pr-2">

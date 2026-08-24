@@ -25,6 +25,19 @@ export function calculateSavings(
   return totalIncome - totalExpenses;
 }
 
+/**
+ * Percent change from `previous` to `current`, or null when the previous
+ * value is 0 — "up from nothing" has no meaningful percentage, and showing
+ * 0% or ∞ would both misstate it.
+ */
+export function calculatePercentChange(
+  current: number,
+  previous: number,
+): number | null {
+  if (previous === 0) return null;
+  return ((current - previous) / Math.abs(previous)) * 100;
+}
+
 export function findTopCategory(
   categoryTotals: CategoryTotal[],
 ): CategoryTotal | null {

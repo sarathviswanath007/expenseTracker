@@ -5,6 +5,7 @@ import { getCategoryAlertStatus } from "@/lib/budget-alerts";
 import {
   calculateRemainingBudget,
   calculateSavings,
+  calculatePercentChange,
   calculateUtilizationPercent,
   findTopCategory,
   type CategoryTotal,
@@ -13,6 +14,7 @@ import { getBudgetForMonth } from "@/services/budget.service";
 import type {
   BudgetVsActualPoint,
   CategoryAlert,
+  CategoryChange,
   DashboardSummary,
   IncomeVsExpensePoint,
   MonthPoint,
@@ -153,23 +155,40 @@ export async function getDashboardSummary(
   if (!user) return null;
 
   const { start, end } = monthRange(month, year);
+  const prev = new Date(Date.UTC(year, month - 2, 1));
+  const prevMonth = prev.getUTCMonth() + 1;
+  const prevYear = prev.getUTCFullYear();
+  const prevRange = monthRange(prevMonth, prevYear);
 
-  const [budget, categoryTotalsMap, totalIncome, { data: recentRows, error: recentError }] =
-    await Promise.all([
-      getBudgetForMonth(month, year),
-      getCategoryTotals(supabase, user.id, start, end),
-      getTotalIncomeForMonth(supabase, user.id, month, year),
-      supabase
-        .from("expenses")
-        .select("*")
-        .eq("user_id", user.id)
-        .gte("expense_date", start)
-        .lte("expense_date", end)
-        .order("expense_date", { ascending: false })
-        .order("created_at", { ascending: false })
-        .limit(5),
-    ]);
+  const [
+    budget,
+    categoryTotalsMap,
+    totalIncome,
+    { data: recentRows, error: recentError },
+    prevCategoryTotalsMap,
+    prevTotalIncome,
+  ] = await Promise.all([
+    getBudgetForMonth(month, year),
+    getCategoryTotals(supabase, user.id, start, end),
+    getTotalIncomeForMonth(supabase, user.id, month, year),
+    supabase
+      .from("expenses")
+      .select("*")
+      .eq("user_id", user.id)
+      .gte("expense_date", start)
+      .lte("expense_date", end)
+      .order("expense_date", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(5),
+    getCategoryTotals(supabase, user.id, prevRange.start, prevRange.end),
+    getTotalIncomeForMonth(supabase, user.id, prevMonth, prevYear),
+  ]);
   if (recentError) throw new Error(recentError.message);
+
+  const prevTotalExpenses = Array.from(prevCategoryTotalsMap.values()).reduce(
+    (sum, amount) => sum + amount,
+    0,
+  );
 
   const categoryTotals: CategoryTotal[] = Array.from(
     categoryTotalsMap,
@@ -194,11 +213,29 @@ export async function getDashboardSummary(
     })
     .filter((a) => a.status !== "ok");
 
+  const totalSavings = calculateSavings(totalIncome, totalExpenses);
+  const prevTotalSavings = calculateSavings(prevTotalIncome, prevTotalExpenses);
+
+  const categoryChanges: CategoryChange[] = categoryTotals
+    .map((c) => {
+      const previousAmount = prevCategoryTotalsMap.get(c.category) ?? 0;
+      return {
+        category: c.category,
+        amount: c.amount,
+        previousAmount,
+        percentChange: calculatePercentChange(c.amount, previousAmount),
+      };
+    })
+    .filter((c) => c.percentChange !== null)
+    .sort(
+      (a, b) => Math.abs(b.percentChange!) - Math.abs(a.percentChange!),
+    );
+
   return {
     currency: budget?.currency ?? "USD",
     totalIncome,
     totalExpenses,
-    totalSavings: calculateSavings(totalIncome, totalExpenses),
+    totalSavings,
     totalBudget,
     remainingBudget: calculateRemainingBudget(totalBudget, totalExpenses),
     utilizationPercent: calculateUtilizationPercent(totalExpenses, totalBudget),
@@ -206,6 +243,13 @@ export async function getDashboardSummary(
     categoryTotals,
     alerts,
     recentTransactions: (recentRows ?? []).map(mapExpenseRow),
+    categoryChanges,
+    previousMonth: {
+      totalIncome: prevTotalIncome,
+      totalExpenses: prevTotalExpenses,
+      totalSavings: prevTotalSavings,
+      hasData: prevTotalIncome > 0 || prevTotalExpenses > 0,
+    },
   };
 }
 
