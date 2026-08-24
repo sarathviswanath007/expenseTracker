@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { createSupabaseBrowserClient } from "@/lib/auth/supabase-browser";
-import { getPasswordError, isValidEmail } from "@/lib/auth/validation";
+import { isValidEmail } from "@/lib/auth/validation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,11 +15,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-export default function SignupPage() {
-  const [name, setName] = useState("");
+export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -32,30 +29,19 @@ export default function SignupPage() {
       setError("Please enter a valid email address.");
       return;
     }
-    const passwordError = getPasswordError(password);
-    if (passwordError) {
-      setError(passwordError);
-      return;
-    }
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
 
     setLoading(true);
     const supabase = createSupabaseBrowserClient();
-    const { error: signUpError } = await supabase.auth.signUp({
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(
       email,
-      password,
-      options: {
-        data: { full_name: name },
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      {
+        redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
       },
-    });
+    );
     setLoading(false);
 
-    if (signUpError) {
-      setError(signUpError.message);
+    if (resetError) {
+      setError(resetError.message);
       return;
     }
     setSubmitted(true);
@@ -68,8 +54,8 @@ export default function SignupPage() {
           <CardHeader>
             <CardTitle>Check your email</CardTitle>
             <CardDescription>
-              We sent a confirmation link to {email}. Click it to activate
-              your account, then come back and log in.
+              If an account exists for {email}, we sent a link to reset your
+              password.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -81,23 +67,13 @@ export default function SignupPage() {
     <div className="flex flex-1 items-center justify-center p-6">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>Create your account</CardTitle>
+          <CardTitle>Reset your password</CardTitle>
           <CardDescription>
-            Start tracking smarter with BudgetWise AI.
+            Enter your email and we&apos;ll send you a reset link.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="name">Name</Label>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                autoComplete="name"
-                required
-              />
-            </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -109,37 +85,14 @@ export default function SignupPage() {
                 required
               />
             </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete="new-password"
-                required
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="confirm-password">Confirm password</Label>
-              <Input
-                id="confirm-password"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                autoComplete="new-password"
-                required
-              />
-            </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
             <Button type="submit" disabled={loading} className="w-full">
-              {loading ? "Creating account..." : "Sign up"}
+              {loading ? "Sending..." : "Send reset link"}
             </Button>
           </form>
           <p className="mt-4 text-center text-sm text-muted-foreground">
-            Already have an account?{" "}
             <Link href="/login" className="font-medium text-foreground underline">
-              Log in
+              Back to login
             </Link>
           </p>
         </CardContent>
