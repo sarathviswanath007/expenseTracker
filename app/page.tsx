@@ -106,7 +106,7 @@ export default function Home() {
           <nav className="flex items-center gap-2">
             <Link
               href="/login"
-              className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
+              className={cn(buttonVariants({ size: "sm" }))}
             >
               Log in
             </Link>
