@@ -98,11 +98,14 @@ export function AppShell({ children }: { children: ReactNode }) {
             </Button>
 
             <div className="min-w-0 flex-1">
-              <h1 className="truncate text-base font-semibold sm:text-lg">
+              {/* On desktop the sidebar already marks the current section, so
+                  the page name would only repeat it — keep it for screen
+                  readers and for mobile, where the sidebar is hidden. */}
+              <h1 className="truncate text-base font-semibold md:sr-only">
                 {current?.label ?? "BudgetWise AI"}
               </h1>
               {current?.subtitle && (
-                <p className="hidden truncate text-sm text-muted-foreground sm:block">
+                <p className="hidden truncate text-sm text-muted-foreground md:block">
                   {current.subtitle}
                 </p>
               )}

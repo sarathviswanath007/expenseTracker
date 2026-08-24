@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { LogOut } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/auth/supabase-browser";
 import { Button } from "@/components/ui/button";
 
@@ -20,12 +21,15 @@ export function LogoutButton() {
   return (
     <Button
       type="button"
-      variant="ghost"
+      variant="outline"
       size="sm"
       onClick={handleLogout}
       disabled={loading}
     >
-      {loading ? "Logging out..." : "Log out"}
+      <LogOut className="size-4" aria-hidden="true" />
+      <span className="hidden sm:inline">
+        {loading ? "Logging out..." : "Log out"}
+      </span>
     </Button>
   );
 }

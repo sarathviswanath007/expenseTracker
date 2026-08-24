@@ -36,9 +36,9 @@ const STEPS: Step[] = [
     key: "hasAnyExpense",
     title: "Log your first expense",
     detail:
-      "Record what you spend so your budget reflects what's actually happening.",
+      "Record something you've spent. It gets counted against the category budget you just set.",
     href: "/expenses",
-    cta: "Add expense",
+    cta: "Log an expense",
     icon: Receipt,
   },
 ];
@@ -62,9 +62,45 @@ export function GetStartedPanel({ setup }: { setup: SetupStatus }) {
           <h2 className="text-xl font-semibold tracking-tight">
             Let&apos;s set up your first budget
           </h2>
-          <p className="max-w-lg text-sm text-muted-foreground">
-            Two quick steps and your dashboard fills in with real numbers,
-            spending breakdowns, and month-over-month insights.
+          <p className="max-w-xl text-sm text-muted-foreground">
+            BudgetWise works by comparing two things: your{" "}
+            <span className="font-medium text-foreground">plan</span> and your{" "}
+            <span className="font-medium text-foreground">reality</span>.
+          </p>
+
+          <div className="mt-2 grid gap-2 sm:grid-cols-2">
+            <div className="rounded-lg border border-border bg-card p-3">
+              <p className="flex items-center gap-1.5 text-sm font-medium">
+                <Wallet
+                  className="size-4 text-primary-accent"
+                  aria-hidden="true"
+                />
+                A budget is your plan
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground text-pretty">
+                How much you <em>intend</em> to spend this month — say $400 on
+                food, $150 on transport.
+              </p>
+            </div>
+            <div className="rounded-lg border border-border bg-card p-3">
+              <p className="flex items-center gap-1.5 text-sm font-medium">
+                <Receipt
+                  className="size-4 text-primary-accent"
+                  aria-hidden="true"
+                />
+                An expense is what really happened
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground text-pretty">
+                Each purchase you log — a $12 lunch, a $60 grocery run — counts
+                against that plan.
+              </p>
+            </div>
+          </div>
+
+          <p className="mt-2 max-w-xl text-sm text-muted-foreground text-pretty">
+            Once both exist, BudgetWise shows how much of each budget
+            you&apos;ve used, warns you before you run out, and points out what
+            changed since last month.
           </p>
           <div className="mt-2 flex items-center gap-3">
             <div className="h-1.5 w-32 overflow-hidden rounded-full bg-muted">
