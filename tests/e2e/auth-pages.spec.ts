@@ -25,7 +25,7 @@ test("signup page validates password length and matching confirmation", async ({
   await page.getByLabel("Email").fill("test@example.com");
   await page.getByLabel("Password", { exact: true }).fill("short");
   await page.getByLabel("Confirm password").fill("short");
-  await page.getByRole("button", { name: "Sign up" }).click();
+  await page.getByRole("button", { name: "Create account" }).click();
 
   await expect(
     page.getByText("Password must be at least 8 characters."),
@@ -33,7 +33,7 @@ test("signup page validates password length and matching confirmation", async ({
 
   await page.getByLabel("Password", { exact: true }).fill("longenough1");
   await page.getByLabel("Confirm password").fill("longenough2");
-  await page.getByRole("button", { name: "Sign up" }).click();
+  await page.getByRole("button", { name: "Create account" }).click();
 
   await expect(page.getByText("Passwords do not match.")).toBeVisible();
 });

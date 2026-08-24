@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { PanelLeftClose, PanelLeftOpen, PiggyBank } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { LogoMark } from "@/components/brand/logo";
 import { cn } from "@/lib/utils";
 import { NAV_ITEMS } from "@/components/shell/nav-items";
 
@@ -26,10 +27,12 @@ export function SidebarNav({
         )}
       >
         <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-          <PiggyBank className="size-4.5" aria-hidden="true" />
+          <LogoMark className="size-5" />
         </span>
         {!collapsed && (
-          <span className="truncate text-sm font-semibold">BudgetWise AI</span>
+          <span className="truncate text-sm font-semibold tracking-tight">
+            BudgetWise <span className="text-primary-accent">AI</span>
+          </span>
         )}
       </div>
 

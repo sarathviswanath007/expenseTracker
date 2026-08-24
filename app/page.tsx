@@ -4,7 +4,6 @@ import {
   BarChart3,
   Brain,
   Download,
-  PiggyBank,
   Receipt,
   Search,
   Sparkles,
@@ -15,6 +14,7 @@ import {
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { HeroPreview } from "@/components/marketing/hero-preview";
+import { Logo } from "@/components/brand/logo";
 
 const PROBLEMS = [
   {
@@ -102,12 +102,7 @@ export default function Home() {
     <div className="flex flex-1 flex-col">
       <header className="sticky top-0 z-30 border-b border-border bg-background/90 backdrop-blur">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-6 py-3">
-          <div className="flex items-center gap-2">
-            <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <PiggyBank className="size-4.5" aria-hidden="true" />
-            </span>
-            <span className="font-semibold">BudgetWise AI</span>
-          </div>
+          <Logo />
           <nav className="flex items-center gap-2">
             <Link
               href="/login"

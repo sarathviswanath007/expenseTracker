@@ -7,13 +7,8 @@ import { isValidEmail } from "@/lib/auth/validation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { MailCheck } from "lucide-react";
+import { AuthLayout } from "@/components/auth/auth-layout";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -49,54 +44,70 @@ export default function ForgotPasswordPage() {
 
   if (submitted) {
     return (
-      <div className="flex flex-1 items-center justify-center p-6">
-        <Card className="w-full max-w-sm">
-          <CardHeader>
-            <CardTitle>Check your email</CardTitle>
-            <CardDescription>
-              If an account exists for {email}, we sent a link to reset your
-              password.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      </div>
+      <AuthLayout
+        title="Check your email"
+        description={`If an account exists for ${email}, we sent a reset link.`}
+        footer={
+          <Link
+            href="/login"
+            className="font-medium text-primary-accent hover:underline"
+          >
+            Back to login
+          </Link>
+        }
+      >
+        <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-card p-6 text-center">
+          <span className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary-accent">
+            <MailCheck className="size-5" aria-hidden="true" />
+          </span>
+          <p className="text-sm text-muted-foreground">
+            Follow the link to choose a new password. If it hasn&apos;t arrived
+            in a minute, check your spam folder.
+          </p>
+        </div>
+      </AuthLayout>
     );
   }
 
   return (
-    <div className="flex flex-1 items-center justify-center p-6">
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle>Reset your password</CardTitle>
-          <CardDescription>
-            Enter your email and we&apos;ll send you a reset link.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
-                required
-              />
-            </div>
-            {error && <p className="text-sm text-destructive">{error}</p>}
-            <Button type="submit" disabled={loading} className="w-full">
-              {loading ? "Sending..." : "Send reset link"}
-            </Button>
-          </form>
-          <p className="mt-4 text-center text-sm text-muted-foreground">
-            <Link href="/login" className="font-medium text-primary underline">
-              Back to login
-            </Link>
+    <AuthLayout
+      title="Reset your password"
+      description="Enter your email and we'll send you a reset link."
+      footer={
+        <Link
+          href="/login"
+          className="font-medium text-primary-accent hover:underline"
+        >
+          Back to login
+        </Link>
+      }
+    >
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            className="h-10"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            autoComplete="email"
+            placeholder="you@example.com"
+            required
+          />
+        </div>
+        {error && (
+          <p
+            role="alert"
+            className="rounded-lg bg-critical-surface px-3 py-2 text-sm text-critical"
+          >
+            {error}
           </p>
-        </CardContent>
-      </Card>
-    </div>
+        )}
+        <Button type="submit" size="lg" disabled={loading} className="w-full">
+          {loading ? "Sending..." : "Send reset link"}
+        </Button>
+      </form>
+    </AuthLayout>
   );
 }
