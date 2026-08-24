@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { LogoutButton } from "@/components/logout-button";
 import { completeOnboarding } from "@/services/budget.service";
+import { DEFAULT_CATEGORIES } from "@/lib/categories";
 import type { Currency } from "@/types/budget";
 
 const TOTAL_STEPS = 6;
@@ -27,18 +28,6 @@ const GOAL_OPTIONS = [
   "Build an emergency fund",
   "Plan for a vacation",
   "Invest more",
-];
-
-const DEFAULT_CATEGORIES = [
-  "Rent",
-  "Food",
-  "Transportation",
-  "Shopping",
-  "Entertainment",
-  "Bills",
-  "Healthcare",
-  "Investments",
-  "Savings",
 ];
 
 const CURRENCY_SYMBOLS: Record<Currency, string> = {

@@ -103,30 +103,30 @@ Each top-level checkbox is scoped to be implementable and independently verifiab
 ## Phase 3 — Expense Tracking (Week 3)
 
 ### Data model
-- [ ] Create `expenses` table per Section 14 schema
+- [x] Create `expenses` table per Section 14 schema
 
 ### Expense CRUD (Section 6)
-- [ ] API: add expense (amount, category, date, payment method, description)
-- [ ] API: edit expense
-- [ ] API: delete expense
-- [ ] API: list expenses with pagination
+- [x] API: add expense (amount, category, date, payment method, description) (`createExpense`)
+- [x] API: edit expense (`updateExpense`)
+- [x] API: delete expense (`deleteExpense`)
+- [x] API: list expenses with pagination (`listExpenses`, page/pageSize + total count)
 
 ### Categorization, filters & search
-- [ ] Implement category selection UI (reuses the user's budget categories)
-- [ ] Implement filter by category
-- [ ] Implement filter by date range
-- [ ] Implement search by description/notes
+- [x] Implement category selection UI (reuses the user's budget categories) (`getUserCategories` unions categories across all the user's budgets, falling back to the default list if none exist yet)
+- [x] Implement filter by category
+- [x] Implement filter by date range
+- [x] Implement search by description/notes
 
 ### Expense Management Page (Section 10.6)
-- [ ] UI: add-expense form with payment method selector (Cash, UPI, Credit Card, Debit Card, Bank Transfer, Wallet)
-- [ ] UI: expense list/table with edit/delete actions
-- [ ] UI: filter and search controls
+- [x] UI: add-expense form with payment method selector (Cash, UPI, Credit Card, Debit Card, Bank Transfer, Wallet)
+- [x] UI: expense list/table with edit/delete actions (inline row editing, no modal)
+- [x] UI: filter and search controls (category/from/to/search, reflected in the URL)
 
 ### Testing
-- [ ] Unit test: expense validation (amount, required fields, date format)
+- [x] Unit test: expense validation (amount, required fields, date format) (`tests/unit/expense-validation.test.ts`)
 - [ ] API test: expense CRUD endpoints
 - [ ] API test: filter/search query parameters
-- [ ] Integration test: adding/editing/deleting an expense updates the budget's "actual" totals
+- [ ] Integration test: adding/editing/deleting an expense updates the budget's "actual" totals (also blocked on the dashboard/analytics "actual spend" aggregation, which is Phase 4)
 - [ ] UI test: add/edit/delete expense flow
 - [ ] UI test: filter and search interactions
 - [ ] E2E test: add expenses that push a category over its budget limit and confirm the data is correctly queryable

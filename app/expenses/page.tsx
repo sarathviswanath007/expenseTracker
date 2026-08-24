@@ -1,7 +1,40 @@
-export default function ExpensesPage() {
+import { getUserCategories, listExpenses } from "@/services/expense.service";
+import { ExpenseManager } from "@/components/expenses/expense-manager";
+
+const PAGE_SIZE = 10;
+
+function param(
+  searchParams: Record<string, string | string[] | undefined>,
+  key: string,
+): string | undefined {
+  const value = searchParams[key];
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function ExpensesPage(props: PageProps<"/expenses">) {
+  const searchParams = await props.searchParams;
+
+  const category = param(searchParams, "category") || undefined;
+  const from = param(searchParams, "from") || undefined;
+  const to = param(searchParams, "to") || undefined;
+  const search = param(searchParams, "search") || undefined;
+  const page = Math.max(1, Number(param(searchParams, "page")) || 1);
+
+  const [categories, result] = await Promise.all([
+    getUserCategories(),
+    listExpenses({ category, from, to, search, page, pageSize: PAGE_SIZE }),
+  ]);
+
   return (
-    <div className="flex flex-1 items-center justify-center p-16">
-      <p className="text-muted-foreground">Expenses page — coming soon.</p>
+    <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col p-6">
+      <ExpenseManager
+        categories={categories}
+        expenses={result.expenses}
+        total={result.total}
+        pageSize={PAGE_SIZE}
+        page={page}
+        filters={{ category, from, to, search }}
+      />
     </div>
   );
 }

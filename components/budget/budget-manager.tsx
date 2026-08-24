@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatCurrency } from "@/lib/format-currency";
+import { DEFAULT_CATEGORIES } from "@/lib/categories";
 import {
   copyPreviousMonthBudget,
   deleteBudget,
@@ -34,18 +35,6 @@ const MONTH_NAMES = [
   "October",
   "November",
   "December",
-];
-
-const DEFAULT_CATEGORIES = [
-  "Rent",
-  "Food",
-  "Transportation",
-  "Shopping",
-  "Entertainment",
-  "Bills",
-  "Healthcare",
-  "Investments",
-  "Savings",
 ];
 
 interface CategoryRow {
