@@ -18,7 +18,7 @@ Each top-level checkbox is scoped to be implementable and independently verifiab
 - [x] Set up ESLint, Prettier, and base tooling scripts
 - [x] Create a Supabase project (PostgreSQL + Auth + Storage)
 - [x] Configure environment variables / secrets handling for local (`.env.local.example` + gitignored `.env.local`)
-- [ ] Set up GitHub Actions CI skeleton (lint, type-check, build, test)
+- [x] Set up GitHub Actions CI skeleton (lint, type-check, build, test)
 
 ### Database
 - [x] Create `users` table matching the schema in Section 14
