@@ -13,11 +13,11 @@ Each top-level checkbox is scoped to be implementable and independently verifiab
 ## Phase 1 — MVP Foundation (Week 1)
 
 ### Project setup
-- [ ] Initialize Next.js + TypeScript project using the folder structure in Section 13 (`app/`, `components/`, `lib/`, `services/`, `types/`, `hooks/`, `tests/`)
-- [ ] Install and configure Tailwind CSS + shadcn/ui
-- [ ] Set up ESLint, Prettier, and base tooling scripts
+- [x] Initialize Next.js + TypeScript project using the folder structure in Section 13 (`app/`, `components/`, `lib/`, `services/`, `types/`, `hooks/`, `tests/`)
+- [x] Install and configure Tailwind CSS + shadcn/ui
+- [x] Set up ESLint, Prettier, and base tooling scripts
 - [ ] Create a Supabase project (PostgreSQL + Auth + Storage)
-- [ ] Configure environment variables / secrets handling for local and CI
+- [x] Configure environment variables / secrets handling for local (`.env.local.example` + gitignored `.env.local`)
 - [ ] Set up GitHub Actions CI skeleton (lint, type-check, build, test)
 
 ### Database
