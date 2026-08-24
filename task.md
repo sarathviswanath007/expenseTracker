@@ -16,7 +16,7 @@ Each top-level checkbox is scoped to be implementable and independently verifiab
 - [x] Initialize Next.js + TypeScript project using the folder structure in Section 13 (`app/`, `components/`, `lib/`, `services/`, `types/`, `hooks/`, `tests/`)
 - [x] Install and configure Tailwind CSS + shadcn/ui
 - [x] Set up ESLint, Prettier, and base tooling scripts
-- [ ] Create a Supabase project (PostgreSQL + Auth + Storage)
+- [x] Create a Supabase project (PostgreSQL + Auth + Storage)
 - [x] Configure environment variables / secrets handling for local (`.env.local.example` + gitignored `.env.local`)
 - [ ] Set up GitHub Actions CI skeleton (lint, type-check, build, test)
 
@@ -25,31 +25,31 @@ Each top-level checkbox is scoped to be implementable and independently verifiab
 - [ ] Configure Supabase row-level security policies on `users`
 
 ### Authentication
-- [ ] Implement email/password registration
-- [ ] Implement email/password login
-- [ ] Implement Google OAuth login
-- [ ] Implement forgot-password flow
-- [ ] Implement logout and session handling
+- [x] Implement email/password registration
+- [x] Implement email/password login
+- [ ] Implement Google OAuth login (UI button scaffolded and disabled; deferred — provider not enabled in Supabase yet)
+- [x] Implement forgot-password flow (request link + set-new-password pages)
+- [ ] Implement logout and session handling (session refresh middleware is in place; no logout button yet — no authenticated screen exists to put it on)
 
 ### UI design & Landing Page (Section 10.1)
-- [ ] Define base design tokens (colors, typography, spacing) in Tailwind config
-- [ ] Build Landing Page: application introduction section
-- [ ] Build Landing Page: problem statement section
-- [ ] Build Landing Page: key features section
-- [ ] Build Landing Page: how it works section
-- [ ] Build Landing Page: benefits section
-- [ ] Build Landing Page: Login / Sign Up CTAs
-- [ ] Build Login / Registration page UI (Section 10.2)
+- [x] Define base design tokens (colors, typography, spacing) in Tailwind config
+- [x] Build Landing Page: application introduction section
+- [x] Build Landing Page: problem statement section
+- [x] Build Landing Page: key features section
+- [x] Build Landing Page: how it works section
+- [x] Build Landing Page: benefits section
+- [x] Build Landing Page: Login / Sign Up CTAs
+- [x] Build Login / Registration page UI (Section 10.2)
 
 ### Testing
-- [ ] Unit test: registration/login form validation logic
+- [x] Unit test: registration/login form validation logic (`tests/unit/auth-validation.test.ts`)
 - [ ] API test: registration endpoint (valid input, duplicate email, weak password)
 - [ ] API test: login endpoint (valid credentials, invalid credentials, locked/unknown account)
 - [ ] Integration test: successful auth creates the corresponding `users` row
 - [ ] Security test: password hashing, session/token handling, RLS policy enforcement on `users`
 - [ ] Security test: brute-force / rate-limiting protection on login
-- [ ] UI test: landing page renders and Login/Sign Up CTAs navigate correctly
-- [ ] E2E test: user registers, confirms account, and logs in successfully
+- [x] UI test: landing page renders and Login/Sign Up CTAs navigate correctly (`tests/e2e/home.spec.ts`)
+- [ ] E2E test: user registers, confirms account, and logs in successfully (only client-side validation is covered so far — a real signup wasn't automated to avoid creating test accounts in your live Supabase project)
 
 ---
 
