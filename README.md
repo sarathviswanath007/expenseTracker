@@ -1,36 +1,96 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BudgetWise AI
 
-## Getting Started
+Track smarter. Spend better. Save more.
 
-First, run the development server:
+A personal budgeting app: log expenses, set per-category budgets, and get told
+what changed each month — with the numbers behind every claim.
+
+Next.js 16 (App Router) · React 19 · TypeScript · Supabase (Postgres + Auth) ·
+Tailwind v4 · Playwright · Vitest
+
+## Running locally
 
 ```bash
+npm install
+cp .env.local.example .env.local   # then fill in your Supabase values
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+| Variable                        | Required | Where it comes from                                      |
+| ------------------------------- | -------- | -------------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | yes      | Supabase → Project Settings → Data API                   |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | yes      | Supabase → Project Settings → API Keys                   |
+| `ANTHROPIC_API_KEY`             | no       | console.anthropic.com — enables the AI advice panel only |
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Without the Anthropic key everything works; the "Where to optimise next month"
+panel reports that it isn't configured. Never prefix that key with
+`NEXT_PUBLIC_` — that would ship it to every visitor's browser.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Database
 
-## Learn More
+Schema lives in `supabase/migrations/`, applied in filename order. With the
+Supabase CLI linked:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+supabase db push
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Without it, paste each migration into the SQL Editor in order. Every table has
+row-level security enabled and scoped to `auth.uid()`, so the database — not
+the app — decides what a request may read.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Checks
 
-## Deploy on Vercel
+```bash
+npm run lint
+npm run type-check     # runs `next typegen` first; route types are generated
+npm run test:unit
+npm run test:e2e       # public pages; see tests/e2e/README.md for the rest
+npm run build
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+GitHub Actions runs all of these on every pull request.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Deploying to Vercel
+
+### 1. Import the repository
+
+At [vercel.com/new](https://vercel.com/new), import the GitHub repo. Vercel
+detects Next.js — leave the build and output settings alone.
+
+### 2. Add environment variables
+
+In the import screen (or Project → Settings → Environment Variables), add
+`NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` for **all three**
+environments: Production, Preview, and Development. Add `ANTHROPIC_API_KEY` too
+if you want the advice panel, Production only is fine.
+
+Changing an environment variable does not rebuild anything — redeploy after.
+
+### 3. Point Supabase at the deployed URL
+
+**This is the step people miss, and signup breaks without it.** Confirmation and
+password-reset emails are built from the origin the request came from, so
+Supabase has to recognise the production domain.
+
+Supabase → Authentication → URL Configuration:
+
+- **Site URL** — `https://your-app.vercel.app`
+- **Redirect URLs** — add `https://your-app.vercel.app/auth/callback`, and
+  `http://localhost:3000/auth/callback` so local signup keeps working
+
+Preview deployments get a fresh URL per branch, so add a wildcard
+(`https://your-project-*.vercel.app/auth/callback`) if you want auth to work on
+previews as well.
+
+### 4. Deploy
+
+Pushing to `main` deploys to production; every pull request gets its own preview
+URL. GitHub Actions still runs the test suite independently of Vercel's build.
+
+### After deploying
+
+- Sign up with a real address and confirm the email — that exercises the redirect
+  configuration end to end, which nothing else does.
+- The first account to sign up should be promoted to admin (`role = 'admin'` in
+  `public.users`) to reach the Users page.
