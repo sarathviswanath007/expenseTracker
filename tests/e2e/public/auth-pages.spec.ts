@@ -14,7 +14,9 @@ test("login page shows required fields and validates before submitting", async (
   await page.getByLabel("Password").fill("something");
   await page.getByRole("button", { name: "Log in" }).click();
 
-  await expect(page.getByText("Please enter a valid email address.")).toBeVisible();
+  await expect(
+    page.getByText("Please enter a valid email address."),
+  ).toBeVisible();
 });
 
 test("signup page validates password length and matching confirmation", async ({
@@ -41,5 +43,7 @@ test("signup page validates password length and matching confirmation", async ({
 test("forgot password page requests a reset link", async ({ page }) => {
   await page.goto("/forgot-password");
   await expect(page.getByLabel("Email")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Send reset link" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Send reset link" }),
+  ).toBeVisible();
 });
