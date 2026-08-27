@@ -14,7 +14,13 @@ import { LogoutButton } from "@/components/logout-button";
 
 const COLLAPSE_KEY = "budgetwise-sidebar-collapsed";
 
-export function AppShell({ children }: { children: ReactNode }) {
+export function AppShell({
+  children,
+  isAdmin = false,
+}: {
+  children: ReactNode;
+  isAdmin?: boolean;
+}) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -54,7 +60,11 @@ export function AppShell({ children }: { children: ReactNode }) {
           )}
         >
           <div className="sticky top-0 h-dvh">
-            <SidebarNav collapsed={collapsed} onToggle={toggleCollapsed} />
+            <SidebarNav
+              collapsed={collapsed}
+              onToggle={toggleCollapsed}
+              isAdmin={isAdmin}
+            />
           </div>
         </aside>
 

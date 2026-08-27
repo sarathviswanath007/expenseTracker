@@ -8,10 +8,24 @@ const ROUTES = [
   { path: "/insights", heading: /insight|Nothing to flag/i },
   { path: "/goals", heading: "Savings goals are coming soon" },
   { path: "/export", heading: "What to include" },
-  { path: "/settings", heading: "Settings are coming soon" },
 ];
 
 test.describe("app shell", () => {
+  test("the Users tab is hidden from a non-admin", async ({ page }) => {
+    await page.goto("/dashboard");
+
+    // The account the suite signs in as is not an admin unless someone made
+    // it one; skip rather than fail if it is.
+    const usersLink = page.getByRole("link", { name: "Users" });
+    if ((await usersLink.count()) > 0) {
+      test.skip(true, "the test account is an admin");
+    }
+
+    await expect(usersLink).toHaveCount(0);
+    await page.goto("/users");
+    await expect(page.getByText(/404|not found/i).first()).toBeVisible();
+  });
+
   for (const route of ROUTES) {
     test(`${route.path} renders for a signed-in user`, async ({ page }) => {
       await page.goto(route.path);

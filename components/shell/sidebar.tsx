@@ -5,18 +5,21 @@ import { usePathname } from "next/navigation";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { LogoMark } from "@/components/brand/logo";
 import { cn } from "@/lib/utils";
-import { NAV_ITEMS } from "@/components/shell/nav-items";
+import { visibleNavItems } from "@/components/shell/nav-items";
 
 export function SidebarNav({
   collapsed,
   onToggle,
   onNavigate,
+  isAdmin = false,
 }: {
   collapsed: boolean;
   onToggle?: () => void;
   onNavigate?: () => void;
+  isAdmin?: boolean;
 }) {
   const pathname = usePathname();
+  const items = visibleNavItems(isAdmin);
 
   return (
     <div className="flex h-full flex-col gap-2 p-3">
@@ -37,7 +40,7 @@ export function SidebarNav({
       </div>
 
       <nav aria-label="Main" className="flex flex-1 flex-col gap-0.5">
-        {NAV_ITEMS.map((item) => {
+        {items.map((item) => {
           const active =
             pathname === item.href || pathname.startsWith(`${item.href}/`);
           const Icon = item.icon;

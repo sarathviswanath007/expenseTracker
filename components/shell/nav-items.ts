@@ -3,9 +3,9 @@ import {
   Download,
   LayoutDashboard,
   Receipt,
-  Settings,
   Sparkles,
   Target,
+  Users,
   Wallet,
   type LucideIcon,
 } from "lucide-react";
@@ -16,6 +16,8 @@ export interface NavItem {
   icon: LucideIcon;
   /** Shown as the header subtitle for this route. */
   subtitle: string;
+  /** Hidden from the sidebar unless the viewer is an admin. */
+  adminOnly?: boolean;
 }
 
 export const NAV_ITEMS: NavItem[] = [
@@ -62,12 +64,19 @@ export const NAV_ITEMS: NavItem[] = [
     subtitle: "Download your expenses, budgets, and reports.",
   },
   {
-    href: "/settings",
-    label: "Settings",
-    icon: Settings,
-    subtitle: "Manage your profile, currency, and categories.",
+    href: "/users",
+    label: "Users",
+    icon: Users,
+    subtitle: "Everyone who has signed up, and who can administer the app.",
+    adminOnly: true,
   },
 ];
+
+/** The items a viewer may see. Sidebar visibility only — access is enforced
+ *  by row-level security in the database. */
+export function visibleNavItems(isAdmin: boolean): NavItem[] {
+  return NAV_ITEMS.filter((item) => !item.adminOnly || isAdmin);
+}
 
 export function findNavItem(pathname: string): NavItem | undefined {
   return NAV_ITEMS.find(
