@@ -165,56 +165,61 @@ export function IncomeManager({
           />
         ) : (
           <div className="divide-y divide-border overflow-hidden rounded-xl border border-border">
-            <div className="flex items-center gap-2 bg-muted/50 px-3 py-2 text-xs font-medium text-muted-foreground">
+            <div className="hidden items-center gap-2 bg-muted/50 px-3 py-2 text-xs font-medium text-muted-foreground sm:flex">
               <span className="flex-1">Source</span>
               <span className="w-32">Amount</span>
               <span className="w-24">Monthly</span>
               <span className="w-8" aria-hidden="true" />
             </div>
             {rows.map((row) => (
-              <div key={row.id} className="flex items-center gap-2 p-3">
+              <div
+                key={row.id}
+                className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center"
+              >
                 <Input
-                  className="flex-1"
+                  className="w-full sm:flex-1"
                   value={row.source}
                   onChange={(e) => patchRow(row.id, { source: e.target.value })}
                   onBlur={() => handleSave(row)}
                   aria-label="Income source"
                 />
-                <MoneyInput
-                  className="w-32"
-                  currency={currency}
-                  value={String(row.amount)}
-                  onChange={(e) =>
-                    patchRow(row.id, { amount: Number(e.target.value) })
-                  }
-                  onBlur={() => handleSave(row)}
-                  aria-label={`Amount for ${row.source || "income"}`}
-                />
-                <label className="flex w-24 items-center gap-2 text-sm text-muted-foreground">
-                  <Checkbox
-                    checked={row.isRecurring}
-                    onCheckedChange={(checked) => {
-                      const isRecurring = checked === true;
-                      patchRow(row.id, { isRecurring });
-                      handleSave({ ...row, isRecurring });
-                    }}
-                    aria-label={`${row.source || "Income"} repeats monthly`}
+                <div className="flex items-center gap-2">
+                  <MoneyInput
+                    className="flex-1 sm:w-32 sm:flex-none"
+                    currency={currency}
+                    value={String(row.amount)}
+                    onChange={(e) =>
+                      patchRow(row.id, { amount: Number(e.target.value) })
+                    }
+                    onBlur={() => handleSave(row)}
+                    aria-label={`Amount for ${row.source || "income"}`}
                   />
-                  Monthly
-                </label>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  className="text-muted-foreground hover:text-foreground"
-                  onClick={() => handleDelete(row)}
-                  disabled={busyId === row.id}
-                >
-                  <Trash2 aria-hidden="true" />
-                  <span className="sr-only">
-                    Delete {row.source || "income source"}
-                  </span>
-                </Button>
+                  <label className="flex w-24 shrink-0 items-center gap-2 text-sm text-muted-foreground">
+                    <Checkbox
+                      checked={row.isRecurring}
+                      onCheckedChange={(checked) => {
+                        const isRecurring = checked === true;
+                        patchRow(row.id, { isRecurring });
+                        handleSave({ ...row, isRecurring });
+                      }}
+                      aria-label={`${row.source || "Income"} repeats monthly`}
+                    />
+                    Monthly
+                  </label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    className="shrink-0 text-muted-foreground hover:text-foreground"
+                    onClick={() => handleDelete(row)}
+                    disabled={busyId === row.id}
+                  >
+                    <Trash2 aria-hidden="true" />
+                    <span className="sr-only">
+                      Delete {row.source || "income source"}
+                    </span>
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
