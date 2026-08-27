@@ -257,16 +257,19 @@ export function BudgetManager({
             <div className="flex flex-col gap-2">
               <Label>Categories</Label>
               <div className="divide-y divide-border overflow-hidden rounded-xl border border-border">
-                <div className="flex items-center gap-2 bg-muted/50 px-3 py-2 text-xs font-medium text-muted-foreground">
+                <div className="hidden items-center gap-2 bg-muted/50 px-3 py-2 text-xs font-medium text-muted-foreground sm:flex">
                   <span className="flex-1">Category</span>
                   <span className="w-28">Budget</span>
                   <span className="w-24">Alert at %</span>
                   <span className="w-8" aria-hidden="true" />
                 </div>
                 {rows.map((row) => (
-                  <div key={row.key} className="flex items-center gap-2 p-3">
+                  <div
+                    key={row.key}
+                    className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center"
+                  >
                     <Input
-                      className="flex-1"
+                      className="w-full sm:flex-1"
                       value={row.category}
                       onChange={(e) =>
                         updateRow(row.key, { category: e.target.value })
@@ -274,42 +277,46 @@ export function BudgetManager({
                       placeholder="Category name"
                       aria-label="Category name"
                     />
-                    <MoneyInput
-                      className="w-28"
-                      currency={currency}
-                      value={row.allocatedAmount}
-                      onChange={(e) =>
-                        updateRow(row.key, { allocatedAmount: e.target.value })
-                      }
-                      aria-label={`Budget for ${row.category || "category"}`}
-                    />
-                    <Input
-                      type="number"
-                      min="1"
-                      max="100"
-                      className="w-24 tabular-nums"
-                      value={row.alertThresholdPercent}
-                      onChange={(e) =>
-                        updateRow(row.key, {
-                          alertThresholdPercent: e.target.value,
-                        })
-                      }
-                      placeholder="85"
-                      title="Alert threshold (% of category budget)"
-                      aria-label={`Alert threshold for ${row.category || "category"}`}
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      className="text-muted-foreground hover:text-foreground"
-                      onClick={() => removeRow(row.key)}
-                    >
-                      <Trash2 aria-hidden="true" />
-                      <span className="sr-only">
-                        Remove {row.category || "category"}
-                      </span>
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <MoneyInput
+                        className="flex-1 sm:w-28 sm:flex-none"
+                        currency={currency}
+                        value={row.allocatedAmount}
+                        onChange={(e) =>
+                          updateRow(row.key, {
+                            allocatedAmount: e.target.value,
+                          })
+                        }
+                        aria-label={`Budget for ${row.category || "category"}`}
+                      />
+                      <Input
+                        type="number"
+                        min="1"
+                        max="100"
+                        className="w-20 shrink-0 tabular-nums sm:w-24"
+                        value={row.alertThresholdPercent}
+                        onChange={(e) =>
+                          updateRow(row.key, {
+                            alertThresholdPercent: e.target.value,
+                          })
+                        }
+                        placeholder="85"
+                        title="Alert threshold (% of category budget)"
+                        aria-label={`Alert threshold for ${row.category || "category"}`}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        className="shrink-0 text-muted-foreground hover:text-foreground"
+                        onClick={() => removeRow(row.key)}
+                      >
+                        <Trash2 aria-hidden="true" />
+                        <span className="sr-only">
+                          Remove {row.category || "category"}
+                        </span>
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
