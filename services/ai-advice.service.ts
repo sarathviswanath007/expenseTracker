@@ -5,6 +5,7 @@ import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
 import { createSupabaseServerClient } from "@/lib/auth/supabase-server";
 import { getBudgetForMonth } from "@/services/budget.service";
+import { getGoals } from "@/services/goal.service";
 import { formatCurrency } from "@/lib/format-currency";
 import { MONTH_NAMES } from "@/lib/dates";
 import type { Currency } from "@/types/budget";
@@ -66,6 +67,7 @@ Rules you must follow:
 - Recommend changes to spending and budget allocations only. Do not recommend specific investments, securities, or financial products, and do not give investment advice.
 - Prefer categories where the data shows real headroom: consistent overspending, a spike against the recent average, or an allocation far larger than what is actually spent.
 - Do not recommend cutting a category to less than what the user actually spends on it, and be careful with essentials like rent, bills, and loan or salary payments — say so plainly if the only headroom is in an essential.
+- When the user has savings goals, tie at least one recommendation to the nearest one: say what the change is worth per month and how much sooner the goal lands.
 - If the data is too thin to say anything useful, say that in the summary and return no recommendations.
 - Be specific and brief. No preamble, no hedging, no motivational filler.`;
 
@@ -153,6 +155,7 @@ function buildFacts(params: {
   current: Map<string, number>;
   history: Map<string, number>[];
   payments: Map<string, { count: number; amount: number }>;
+  goals: { name: string; targetAmount: number; currentAmount: number }[];
 }): string {
   const {
     currency,
@@ -164,6 +167,7 @@ function buildFacts(params: {
     current,
     history,
     payments,
+    goals,
   } = params;
   const money = (value: number) => formatCurrency(value, currency);
 
@@ -203,6 +207,12 @@ function buildFacts(params: {
     "",
     paymentRows.length > 0 ? "Payment methods used this month:" : "",
     ...paymentRows,
+    "",
+    goals.length > 0 ? "Savings goals:" : "",
+    ...goals.map(
+      (goal) =>
+        `- ${goal.name}: ${money(goal.currentAmount)} saved of ${money(goal.targetAmount)}, ${money(Math.max(0, goal.targetAmount - goal.currentAmount))} to go`,
+    ),
   ]
     .filter(Boolean)
     .join("\n");
@@ -232,7 +242,7 @@ export async function getOptimizationAdvice(
     return { month: date.getUTCMonth() + 1, year: date.getUTCFullYear() };
   });
 
-  const [budget, current, income, history] = await Promise.all([
+  const [budget, current, income, history, goalsResult] = await Promise.all([
     getBudgetForMonth(month, year),
     monthTotals(supabase, user.id, month, year),
     totalIncome(supabase, user.id, month, year),
@@ -241,6 +251,7 @@ export async function getOptimizationAdvice(
         monthTotals(supabase, user.id, point.month, point.year),
       ),
     ),
+    getGoals(),
   ]);
 
   const populatedHistory = history.filter((entry) => entry.rowCount > 0);
@@ -266,6 +277,13 @@ export async function getOptimizationAdvice(
     current: current.byCategory,
     history: populatedHistory.map((entry) => entry.byCategory),
     payments: current.byPaymentMethod,
+    goals: (goalsResult?.goals ?? [])
+      .filter((goal) => goal.status === "active")
+      .map((goal) => ({
+        name: goal.name,
+        targetAmount: goal.targetAmount,
+        currentAmount: goal.currentAmount,
+      })),
   });
 
   try {

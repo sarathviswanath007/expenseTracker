@@ -47,7 +47,7 @@ export const NAV_ITEMS: NavItem[] = [
     href: "/goals",
     label: "Goals",
     icon: Target,
-    subtitle: "Track what you're saving toward.",
+    subtitle: "Track what you're saving toward, and when you'll get there.",
   },
   {
     href: "/insights",
