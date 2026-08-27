@@ -1,15 +1,9 @@
-import { Download } from "lucide-react";
-import { EmptyState } from "@/components/ui/empty-state";
-import { PageContainer } from "@/components/shell/page-container";
+import { ExportView } from "@/components/export/export-view";
+import { parseMonthYearParams } from "@/lib/dates";
 
-export default function ExportPage() {
-  return (
-    <PageContainer width="narrow" className="justify-center">
-      <EmptyState
-        icon={Download}
-        title="Exports are coming soon"
-        description="You'll be able to download your expenses, budgets, and analytics as CSV, Excel, or PDF for any month."
-      />
-    </PageContainer>
-  );
+export default async function ExportPage(props: PageProps<"/export">) {
+  const searchParams = await props.searchParams;
+  const { month, year } = parseMonthYearParams(searchParams);
+
+  return <ExportView month={month} year={year} />;
 }
