@@ -22,6 +22,8 @@
   --color-positive: var(--positive);
   --color-positive-surface: var(--positive-surface);
   --color-warning: var(--warning);
+  --color-attention: var(--attention);
+  --color-attention-text: var(--attention-text);
   --color-warning-surface: var(--warning-surface);
   --color-critical: var(--critical);
   --color-critical-surface: var(--critical-surface);
@@ -89,6 +91,11 @@
   --positive: #06703a;
   --positive-surface: #e8f5ee;
   --warning: #8a5a00;
+  /* "Heads up" tone for budget alerts short of going over — the same indigo
+     as the primary actions, so the alert reads as part of the UI, not a
+     separate warning palette. */
+  --attention: #4f46e5;
+  --attention-text: #4f46e5;
   --warning-surface: #fdf3e2;
   --critical: #b3261e;
   --critical-surface: #fdecea;
@@ -134,6 +141,8 @@
   --positive: #4ade80;
   --positive-surface: #0e2a1a;
   --warning: #fbbf24;
+  --attention: #6366f1;
+  --attention-text: #a5b4fc;
   --warning-surface: #2e2410;
   --critical: #f87171;
   --critical-surface: #2e1616;

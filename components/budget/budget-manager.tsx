@@ -2,9 +2,19 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Trash2, Plus, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { MoneyInput } from "@/components/ui/money-input";
+import { EmptyState } from "@/components/ui/empty-state";
+import { useToast } from "@/components/ui/toast";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageContainer } from "@/components/shell/page-container";
+import {
+  MonthYearPicker,
+  PageToolbar,
+} from "@/components/shell/month-year-picker";
 import {
   Select,
   SelectContent,
@@ -15,11 +25,13 @@ import {
 import { formatCurrency } from "@/lib/format-currency";
 import { DEFAULT_CATEGORIES } from "@/lib/categories";
 import { MONTH_NAMES } from "@/lib/dates";
+import { IncomeManager } from "@/components/budget/income-manager";
 import {
   copyPreviousMonthBudget,
   deleteBudget,
   saveBudget,
   type BudgetWithCategories,
+  type IncomeRecord,
 } from "@/services/budget.service";
 import type { Currency } from "@/types/budget";
 
@@ -54,12 +66,15 @@ export function BudgetManager({
   month,
   year,
   budget,
+  income,
 }: {
   month: number;
   year: number;
   budget: BudgetWithCategories | null;
+  income: IncomeRecord[];
 }) {
   const router = useRouter();
+  const { toast } = useToast();
   const [showForm, setShowForm] = useState(Boolean(budget));
   const [currency, setCurrency] = useState<Currency>(budget?.currency ?? "USD");
   const [savingsTarget, setSavingsTarget] = useState(
@@ -74,7 +89,9 @@ export function BudgetManager({
   const [deleting, setDeleting] = useState(false);
 
   function updateRow(key: string, patch: Partial<CategoryRow>) {
-    setRows((prev) => prev.map((r) => (r.key === key ? { ...r, ...patch } : r)));
+    setRows((prev) =>
+      prev.map((r) => (r.key === key ? { ...r, ...patch } : r)),
+    );
   }
 
   function removeRow(key: string) {
@@ -115,6 +132,7 @@ export function BudgetManager({
         savingsTarget: Number(savingsTarget) || 0,
         categories: cleaned,
       });
+      toast(budget ? "Budget updated." : "Budget saved.");
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save budget.");
@@ -132,6 +150,7 @@ export function BudgetManager({
     setError(null);
     try {
       await deleteBudget(budget.id);
+      toast("Budget deleted.");
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete budget.");
@@ -145,6 +164,7 @@ export function BudgetManager({
     setError(null);
     try {
       await copyPreviousMonthBudget(month, year);
+      toast("Last month's budget copied over.");
       router.refresh();
     } catch (err) {
       setError(
@@ -155,196 +175,189 @@ export function BudgetManager({
     }
   }
 
-  const total = rows.reduce((sum, r) => sum + (Number(r.allocatedAmount) || 0), 0);
+  const total = rows.reduce(
+    (sum, r) => sum + (Number(r.allocatedAmount) || 0),
+    0,
+  );
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex items-end gap-2">
-        <div className="flex flex-col gap-1.5">
-          <Label>Month</Label>
-          <Select
-            value={String(month)}
-            onValueChange={(value) => changeMonthYear(Number(value), year)}
-          >
-            <SelectTrigger className="w-40" aria-label="Month">
-              <SelectValue>
-                {(value) => MONTH_NAMES[Number(value) - 1]}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {MONTH_NAMES.map((name, index) => (
-                <SelectItem key={name} value={String(index + 1)}>
-                  {name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label>Year</Label>
-          <Select
-            value={String(year)}
-            onValueChange={(value) => changeMonthYear(month, Number(value))}
-          >
-            <SelectTrigger className="w-28" aria-label="Year">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {[year - 1, year, year + 1].map((y) => (
-                <SelectItem key={y} value={String(y)}>
-                  {y}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+    <PageContainer width="narrow">
+      <PageToolbar context={`Budget for ${MONTH_NAMES[month - 1]} ${year}`}>
+        <MonthYearPicker month={month} year={year} onChange={changeMonthYear} />
+      </PageToolbar>
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && (
+        <p
+          role="alert"
+          className="rounded-lg bg-critical-surface px-3 py-2 text-sm text-critical"
+        >
+          {error}
+        </p>
+      )}
+
+      <IncomeManager income={income} currency={currency} />
 
       {!showForm && (
-        <div className="flex flex-col items-start gap-3 rounded-lg border border-dashed p-6">
-          <p className="text-muted-foreground">
-            No budget yet for {MONTH_NAMES[month - 1]} {year}.
-          </p>
-          <div className="flex gap-2">
-            <Button onClick={() => setShowForm(true)}>Create budget</Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleCopyPrevious}
-              disabled={copying}
-            >
-              {copying ? "Copying..." : "Copy previous month's budget"}
-            </Button>
-          </div>
-        </div>
+        <EmptyState
+          icon={Wallet}
+          title={`No budget yet for ${MONTH_NAMES[month - 1]} ${year}`}
+          description="Set a limit per category so you can see how the month is tracking — or start from last month's plan."
+          action={
+            <div className="flex flex-wrap justify-center gap-2">
+              <Button onClick={() => setShowForm(true)}>Create budget</Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCopyPrevious}
+                disabled={copying}
+              >
+                {copying ? "Copying..." : "Copy last month"}
+              </Button>
+            </div>
+          }
+        />
       )}
 
       {showForm && (
-        <div className="flex flex-col gap-4">
-          <div className="flex gap-4">
-            <div className="flex flex-col gap-1.5">
-              <Label>Currency</Label>
-              <Select
-                value={currency}
-                onValueChange={(value) => setCurrency(value as Currency)}
-              >
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="USD">USD ($)</SelectItem>
-                  <SelectItem value="INR">INR (₹)</SelectItem>
-                  <SelectItem value="GBP">GBP (£)</SelectItem>
-                </SelectContent>
-              </Select>
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              {MONTH_NAMES[month - 1]} {year} budget
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-5">
+            <div className="flex flex-wrap gap-3">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="budget-currency">Currency</Label>
+                <Select
+                  value={currency}
+                  onValueChange={(value) => setCurrency(value as Currency)}
+                >
+                  <SelectTrigger id="budget-currency" className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="USD">USD ($)</SelectItem>
+                    <SelectItem value="INR">INR (₹)</SelectItem>
+                    <SelectItem value="GBP">GBP (£)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex min-w-40 flex-1 flex-col gap-1.5">
+                <Label htmlFor="budget-savings-target">Savings target</Label>
+                <MoneyInput
+                  id="budget-savings-target"
+                  currency={currency}
+                  value={savingsTarget}
+                  onChange={(e) => setSavingsTarget(e.target.value)}
+                />
+              </div>
             </div>
-            <div className="flex flex-1 flex-col gap-1.5">
-              <Label>Savings target</Label>
-              <Input
-                type="number"
-                min="0"
-                value={savingsTarget}
-                onChange={(e) => setSavingsTarget(e.target.value)}
-              />
-            </div>
-          </div>
 
-          <div className="flex flex-col gap-3">
-            <Label>Categories</Label>
-            <div className="flex items-end gap-2 text-xs text-muted-foreground">
-              <span className="flex-1">Category</span>
-              <span className="w-28">Budget</span>
-              <span className="w-24">Alert at %</span>
-              <span className="w-[4.5rem]" aria-hidden="true" />
+            <div className="flex flex-col gap-2">
+              <Label>Categories</Label>
+              <div className="divide-y divide-border overflow-hidden rounded-xl border border-border">
+                <div className="flex items-center gap-2 bg-muted/50 px-3 py-2 text-xs font-medium text-muted-foreground">
+                  <span className="flex-1">Category</span>
+                  <span className="w-28">Budget</span>
+                  <span className="w-24">Alert at %</span>
+                  <span className="w-8" aria-hidden="true" />
+                </div>
+                {rows.map((row) => (
+                  <div key={row.key} className="flex items-center gap-2 p-3">
+                    <Input
+                      className="flex-1"
+                      value={row.category}
+                      onChange={(e) =>
+                        updateRow(row.key, { category: e.target.value })
+                      }
+                      placeholder="Category name"
+                      aria-label="Category name"
+                    />
+                    <MoneyInput
+                      className="w-28"
+                      currency={currency}
+                      value={row.allocatedAmount}
+                      onChange={(e) =>
+                        updateRow(row.key, { allocatedAmount: e.target.value })
+                      }
+                      aria-label={`Budget for ${row.category || "category"}`}
+                    />
+                    <Input
+                      type="number"
+                      min="1"
+                      max="100"
+                      className="w-24 tabular-nums"
+                      value={row.alertThresholdPercent}
+                      onChange={(e) =>
+                        updateRow(row.key, {
+                          alertThresholdPercent: e.target.value,
+                        })
+                      }
+                      placeholder="85"
+                      title="Alert threshold (% of category budget)"
+                      aria-label={`Alert threshold for ${row.category || "category"}`}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      className="text-muted-foreground hover:text-foreground"
+                      onClick={() => removeRow(row.key)}
+                    >
+                      <Trash2 aria-hidden="true" />
+                      <span className="sr-only">
+                        Remove {row.category || "category"}
+                      </span>
+                    </Button>
+                  </div>
+                ))}
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="self-start"
+                onClick={() => setRows((prev) => [...prev, newRow()])}
+              >
+                <Plus aria-hidden="true" />
+                Add category
+              </Button>
             </div>
-            {rows.map((row) => (
-              <div key={row.key} className="flex items-end gap-2">
-                <div className="flex flex-1 flex-col gap-1.5">
-                  <Input
-                    value={row.category}
-                    onChange={(e) =>
-                      updateRow(row.key, { category: e.target.value })
-                    }
-                    placeholder="Category name"
-                  />
-                </div>
-                <div className="flex w-28 flex-col gap-1.5">
-                  <Input
-                    type="number"
-                    min="0"
-                    value={row.allocatedAmount}
-                    onChange={(e) =>
-                      updateRow(row.key, { allocatedAmount: e.target.value })
-                    }
-                    placeholder="Amount"
-                  />
-                </div>
-                <div className="flex w-24 flex-col gap-1.5">
-                  <Input
-                    type="number"
-                    min="1"
-                    max="100"
-                    value={row.alertThresholdPercent}
-                    onChange={(e) =>
-                      updateRow(row.key, {
-                        alertThresholdPercent: e.target.value,
-                      })
-                    }
-                    placeholder="Alert %"
-                    title="Alert threshold (% of category budget)"
-                  />
-                </div>
+
+            <div className="flex items-center justify-between border-t border-border pt-4 text-sm">
+              <span className="text-muted-foreground">Total planned</span>
+              <span className="font-medium tabular-nums">
+                {formatCurrency(total, currency)}
+              </span>
+            </div>
+
+            <div className="flex justify-between gap-2">
+              {budget ? (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={handleDelete}
+                  disabled={deleting}
+                >
+                  {deleting ? "Deleting..." : "Delete budget"}
+                </Button>
+              ) : (
                 <Button
                   type="button"
                   variant="ghost"
-                  size="sm"
-                  onClick={() => removeRow(row.key)}
+                  onClick={() => setShowForm(false)}
                 >
-                  Remove
+                  Cancel
                 </Button>
-              </div>
-            ))}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setRows((prev) => [...prev, newRow()])}
-            >
-              Add category
-            </Button>
-          </div>
-
-          <p className="text-sm text-muted-foreground">
-            Total planned: {formatCurrency(total, currency)}
-          </p>
-
-          <div className="flex justify-between">
-            {budget ? (
-              <Button
-                type="button"
-                variant="destructive"
-                onClick={handleDelete}
-                disabled={deleting}
-              >
-                {deleting ? "Deleting..." : "Delete budget"}
+              )}
+              <Button onClick={handleSave} disabled={saving}>
+                {saving ? "Saving..." : "Save budget"}
               </Button>
-            ) : (
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setShowForm(false)}
-              >
-                Cancel
-              </Button>
-            )}
-            <Button onClick={handleSave} disabled={saving}>
-              {saving ? "Saving..." : "Save budget"}
-            </Button>
-          </div>
-        </div>
+            </div>
+          </CardContent>
+        </Card>
       )}
-    </div>
+    </PageContainer>
   );
 }

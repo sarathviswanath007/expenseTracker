@@ -1,10 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+  type ComponentProps,
+  type ReactNode,
+} from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { MoneyInput } from "@/components/ui/money-input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -15,7 +21,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import Link from "next/link";
-import { X } from "lucide-react";
+import { ArrowLeft, Check, CheckCircle2, Plus, Trash2 } from "lucide-react";
+import { Logo, LogoMark } from "@/components/brand/logo";
+import { SiteFooter } from "@/components/shell/site-footer";
+import { cn } from "@/lib/utils";
+import { formatCurrency } from "@/lib/format-currency";
 import { completeOnboarding } from "@/services/budget.service";
 import { DEFAULT_CATEGORIES } from "@/lib/categories";
 import type { Currency } from "@/types/budget";
@@ -30,12 +40,6 @@ const GOAL_OPTIONS = [
   "Plan for a vacation",
   "Invest more",
 ];
-
-const CURRENCY_SYMBOLS: Record<Currency, string> = {
-  INR: "₹",
-  GBP: "£",
-  USD: "$",
-};
 
 interface IncomeRow {
   source: string;
@@ -70,6 +74,48 @@ function defaultDraft(initialGoals: string[]): Draft {
     categoryAmounts: {},
     savingsTarget: "",
   };
+}
+
+/** Step title and supporting line, so every step opens the same way. */
+function StepHeading({
+  title,
+  description,
+}: {
+  title: string;
+  description?: string;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <h2 className="text-xl font-semibold tracking-tight">{title}</h2>
+      {description && (
+        <p className="text-sm text-muted-foreground">{description}</p>
+      )}
+    </div>
+  );
+}
+
+/** A toggleable pill used for goals and categories. */
+function Chip({
+  selected,
+  children,
+  ...props
+}: ComponentProps<"button"> & { selected: boolean }) {
+  return (
+    <button
+      type="button"
+      aria-pressed={selected}
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
+        selected
+          ? "border-primary bg-primary/10 text-primary-accent"
+          : "border-border bg-background text-foreground hover:bg-muted",
+      )}
+      {...props}
+    >
+      {selected && <Check className="size-3.5" aria-hidden="true" />}
+      {children}
+    </button>
+  );
 }
 
 export function OnboardingWizard({
@@ -217,6 +263,7 @@ export function OnboardingWizard({
         categories,
       });
       localStorage.removeItem(draftKey(userId));
+      setDraft({ ...draft, step: TOTAL_STEPS });
       setDone(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
@@ -225,268 +272,409 @@ export function OnboardingWizard({
     }
   }
 
-  const symbol = CURRENCY_SYMBOLS[draft.currency];
+  const step = Math.min(draft.step, TOTAL_STEPS);
+  const percentComplete = Math.round((step / TOTAL_STEPS) * 100);
 
-  return (
-    <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 p-6">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          Step {Math.min(draft.step, TOTAL_STEPS)} of {TOTAL_STEPS}
-        </p>
+  const monthlyIncome = draft.incomeRows.reduce(
+    (total, row) => total + (Number(row.amount) || 0),
+    0,
+  );
+  const allocated = draft.selectedCategories.reduce(
+    (total, category) => total + (Number(draft.categoryAmounts[category]) || 0),
+    0,
+  );
+
+  const customCategories = draft.selectedCategories.filter(
+    (c) => !DEFAULT_CATEGORIES.includes(c),
+  );
+
+  let content: ReactNode = null;
+
+  if (done) {
+    content = (
+      <div className="flex flex-col items-center gap-4 py-6 text-center">
+        <span className="flex size-12 items-center justify-center rounded-full bg-positive-surface text-positive">
+          <CheckCircle2 className="size-6" aria-hidden="true" />
+        </span>
+        <div className="flex flex-col gap-1.5">
+          <h1 className="text-2xl font-semibold tracking-tight">
+            You&apos;re all set!
+          </h1>
+          <p className="max-w-sm text-sm text-muted-foreground">
+            Your budget is ready. Start tracking your expenses to see where your
+            money goes.
+          </p>
+        </div>
         <Button
-          render={<Link href="/dashboard" />}
-          variant="ghost"
-          size="sm"
+          size="lg"
+          className="mt-1 h-10 px-5"
+          onClick={() => {
+            router.push("/dashboard");
+            router.refresh();
+          }}
         >
-          <X className="size-4" aria-hidden="true" />
-          Skip for now
+          Go to dashboard
         </Button>
       </div>
-      <Progress value={(Math.min(draft.step, TOTAL_STEPS) / TOTAL_STEPS) * 100} />
-
-      {draft.step === 1 && (
-        <div className="flex flex-col gap-4">
-          <h1 className="text-2xl font-semibold">
+    );
+  } else if (step === 1) {
+    content = (
+      <div className="flex flex-col gap-5">
+        <span className="flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary-accent">
+          <LogoMark className="size-6" />
+        </span>
+        <div className="flex flex-col gap-2">
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
             Welcome to BudgetWise AI
           </h1>
           <p className="text-muted-foreground">
-            Let&apos;s take control of your money. This will only take a
-            couple of minutes.
+            Let&apos;s take control of your money. This will only take a couple
+            of minutes.
           </p>
-          <Button onClick={handleNext}>Get started</Button>
         </div>
-      )}
+        <ul className="flex flex-col gap-2.5 text-sm text-muted-foreground">
+          {[
+            "Tell us what you earn each month",
+            "Pick the goals and categories that matter to you",
+            "Set your budget — we'll track it from there",
+          ].map((point) => (
+            <li key={point} className="flex items-start gap-2.5">
+              <span className="mt-0.5 flex size-4.5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary-accent">
+                <Check className="size-3" aria-hidden="true" />
+              </span>
+              {point}
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  } else if (step === 2) {
+    content = (
+      <div className="flex flex-col gap-6">
+        <StepHeading
+          title="Set your monthly income"
+          description="Add everything that lands in your account each month."
+        />
 
-      {draft.step === 2 && (
-        <div className="flex flex-col gap-4">
-          <h2 className="text-xl font-semibold">Set your monthly income</h2>
-          <div className="flex flex-col gap-1.5">
-            <Label>Currency</Label>
-            <Select
-              value={draft.currency}
-              onValueChange={(value) =>
-                persist({ ...draft, currency: value as Currency })
-              }
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="currency">Currency</Label>
+          <Select
+            value={draft.currency}
+            onValueChange={(value) =>
+              persist({ ...draft, currency: value as Currency })
+            }
+          >
+            <SelectTrigger id="currency" className="h-10 w-full sm:w-52">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="USD">USD ($)</SelectItem>
+              <SelectItem value="INR">INR (₹)</SelectItem>
+              <SelectItem value="GBP">GBP (£)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          {draft.incomeRows.map((row, index) => (
+            <div
+              key={index}
+              className="flex flex-col gap-3 rounded-xl border border-border bg-background p-3.5"
             >
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="USD">USD ($)</SelectItem>
-                <SelectItem value="INR">INR (₹)</SelectItem>
-                <SelectItem value="GBP">GBP (£)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex flex-col gap-3">
-            {draft.incomeRows.map((row, index) => (
-              <div key={index} className="flex flex-col gap-2 rounded-lg border p-3">
-                <div className="flex items-end gap-2">
-                  <div className="flex flex-1 flex-col gap-1.5">
-                    <Label>Source</Label>
-                    <Input
-                      value={row.source}
-                      onChange={(e) =>
-                        updateIncomeRow(index, { source: e.target.value })
-                      }
-                      placeholder="e.g. Salary"
-                    />
-                  </div>
-                  <div className="flex w-28 flex-col gap-1.5">
-                    <Label>Amount</Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      value={row.amount}
-                      onChange={(e) =>
-                        updateIncomeRow(index, { amount: e.target.value })
-                      }
-                      placeholder={`${symbol}0`}
-                    />
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeIncomeRow(index)}
-                  >
-                    Remove
-                  </Button>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                <div className="flex flex-1 flex-col gap-1.5">
+                  <Label htmlFor={`income-source-${index}`}>Source</Label>
+                  <Input
+                    id={`income-source-${index}`}
+                    className="h-10"
+                    value={row.source}
+                    onChange={(e) =>
+                      updateIncomeRow(index, { source: e.target.value })
+                    }
+                    placeholder="e.g. Salary"
+                  />
                 </div>
-                <label className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Checkbox
-                    checked={row.isRecurring}
-                    onCheckedChange={(checked) =>
-                      updateIncomeRow(index, { isRecurring: checked === true })
+                <div className="flex flex-col gap-1.5 sm:w-40">
+                  <Label htmlFor={`income-amount-${index}`}>Amount</Label>
+                  <MoneyInput
+                    id={`income-amount-${index}`}
+                    currency={draft.currency}
+                    className="h-10"
+                    value={row.amount}
+                    onChange={(e) =>
+                      updateIncomeRow(index, { amount: e.target.value })
                     }
                   />
-                  Recurring every month
-                </label>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-lg"
+                  className="size-10 self-end text-muted-foreground hover:text-foreground"
+                  onClick={() => removeIncomeRow(index)}
+                  disabled={draft.incomeRows.length === 1}
+                >
+                  <Trash2 aria-hidden="true" />
+                  <span className="sr-only">
+                    Remove {row.source.trim() || "income source"}
+                  </span>
+                </Button>
               </div>
-            ))}
+              <label className="flex w-fit items-center gap-2 text-sm text-muted-foreground">
+                <Checkbox
+                  checked={row.isRecurring}
+                  onCheckedChange={(checked) =>
+                    updateIncomeRow(index, { isRecurring: checked === true })
+                  }
+                />
+                Recurring every month
+              </label>
+            </div>
+          ))}
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            className="h-10 self-start px-3.5"
+            onClick={addIncomeRow}
+          >
+            <Plus aria-hidden="true" />
+            Add income source
+          </Button>
+        </div>
+
+        {monthlyIncome > 0 && (
+          <p className="text-sm text-muted-foreground">
+            Monthly income:{" "}
+            <span className="font-medium text-foreground">
+              {formatCurrency(monthlyIncome, draft.currency)}
+            </span>
+          </p>
+        )}
+      </div>
+    );
+  } else if (step === 3) {
+    content = (
+      <div className="flex flex-col gap-6">
+        <StepHeading
+          title="What are your financial goals?"
+          description="Select any that apply — we'll tailor your insights around them."
+        />
+        <div className="flex flex-wrap gap-2">
+          {GOAL_OPTIONS.map((goal) => (
+            <Chip
+              key={goal}
+              selected={draft.selectedGoals.includes(goal)}
+              onClick={() => toggleGoal(goal)}
+            >
+              {goal}
+            </Chip>
+          ))}
+        </div>
+      </div>
+    );
+  } else if (step === 4) {
+    content = (
+      <div className="flex flex-col gap-6">
+        <StepHeading
+          title="Create budget categories"
+          description="Choose the categories you want to budget for each month."
+        />
+        <div className="flex flex-wrap gap-2">
+          {DEFAULT_CATEGORIES.map((category) => (
+            <Chip
+              key={category}
+              selected={draft.selectedCategories.includes(category)}
+              onClick={() => toggleCategory(category)}
+            >
+              {category}
+            </Chip>
+          ))}
+          {customCategories.map((category) => (
+            <Chip
+              key={category}
+              selected
+              onClick={() => toggleCategory(category)}
+            >
+              {category}
+            </Chip>
+          ))}
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="custom-category">Add a custom category</Label>
+          <div className="flex items-center gap-2">
+            <Input
+              id="custom-category"
+              className="h-10"
+              value={customCategory}
+              onChange={(e) => setCustomCategory(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  addCustomCategory();
+                }
+              }}
+              placeholder="e.g. Gym membership"
+            />
             <Button
               type="button"
               variant="outline"
-              size="sm"
-              onClick={addIncomeRow}
+              size="lg"
+              className="h-10 px-3.5"
+              onClick={addCustomCategory}
             >
-              Add another income source
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {draft.step === 3 && (
-        <div className="flex flex-col gap-4">
-          <h2 className="text-xl font-semibold">
-            What are your financial goals?
-          </h2>
-          <p className="text-muted-foreground text-sm">Select any that apply.</p>
-          <div className="flex flex-wrap gap-2">
-            {GOAL_OPTIONS.map((goal) => (
-              <Button
-                key={goal}
-                type="button"
-                variant={
-                  draft.selectedGoals.includes(goal) ? "default" : "outline"
-                }
-                size="sm"
-                onClick={() => toggleGoal(goal)}
-              >
-                {goal}
-              </Button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {draft.step === 4 && (
-        <div className="flex flex-col gap-4">
-          <h2 className="text-xl font-semibold">Create budget categories</h2>
-          <div className="flex flex-wrap gap-2">
-            {DEFAULT_CATEGORIES.map((category) => (
-              <Button
-                key={category}
-                type="button"
-                variant={
-                  draft.selectedCategories.includes(category)
-                    ? "default"
-                    : "outline"
-                }
-                size="sm"
-                onClick={() => toggleCategory(category)}
-              >
-                {category}
-              </Button>
-            ))}
-            {draft.selectedCategories
-              .filter((c) => !DEFAULT_CATEGORIES.includes(c))
-              .map((category) => (
-                <Button
-                  key={category}
-                  type="button"
-                  variant="default"
-                  size="sm"
-                  onClick={() => toggleCategory(category)}
-                >
-                  {category}
-                </Button>
-              ))}
-          </div>
-          <div className="flex items-end gap-2">
-            <div className="flex flex-1 flex-col gap-1.5">
-              <Label>Add a custom category</Label>
-              <Input
-                value={customCategory}
-                onChange={(e) => setCustomCategory(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    addCustomCategory();
-                  }
-                }}
-                placeholder="e.g. Gym membership"
-              />
-            </div>
-            <Button type="button" variant="outline" onClick={addCustomCategory}>
+              <Plus aria-hidden="true" />
               Add
             </Button>
           </div>
         </div>
-      )}
+      </div>
+    );
+  } else if (step === 5) {
+    content = (
+      <div className="flex flex-col gap-6">
+        <StepHeading
+          title="Set your monthly budget"
+          description="Decide how much of your income each category gets."
+        />
 
-      {draft.step === 5 && (
-        <div className="flex flex-col gap-4">
-          <h2 className="text-xl font-semibold">Set your monthly budget</h2>
-          <div className="flex flex-col gap-3">
-            {draft.selectedCategories.map((category) => (
-              <div key={category} className="flex items-center gap-2">
-                <Label className="w-32 shrink-0">{category}</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  value={draft.categoryAmounts[category] ?? ""}
-                  onChange={(e) => setCategoryAmount(category, e.target.value)}
-                  placeholder={`${symbol}0`}
-                />
-              </div>
-            ))}
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label>Savings target for the month</Label>
-            <Input
-              type="number"
-              min="0"
-              value={draft.savingsTarget}
-              onChange={(e) =>
-                persist({ ...draft, savingsTarget: e.target.value })
-              }
-              placeholder={`${symbol}0`}
-            />
-          </div>
+        <div className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-background">
+          {draft.selectedCategories.map((category) => (
+            <div
+              key={category}
+              className="flex items-center justify-between gap-4 p-3.5"
+            >
+              <Label
+                htmlFor={`budget-${category}`}
+                className="text-sm font-medium"
+              >
+                {category}
+              </Label>
+              <MoneyInput
+                id={`budget-${category}`}
+                currency={draft.currency}
+                className="h-10 w-36"
+                value={draft.categoryAmounts[category] ?? ""}
+                onChange={(e) => setCategoryAmount(category, e.target.value)}
+              />
+            </div>
+          ))}
         </div>
-      )}
 
-      {draft.step === 6 && done && (
-        <div className="flex flex-col gap-4">
-          <h1 className="text-2xl font-semibold">You&apos;re all set!</h1>
-          <p className="text-muted-foreground">
-            Your budget is ready. Start tracking your expenses to see where
-            your money goes.
-          </p>
-          <Button
-            onClick={() => {
-              router.push("/dashboard");
-              router.refresh();
-            }}
-          >
-            Go to dashboard
-          </Button>
+        <div className="flex items-center justify-between gap-4 text-sm">
+          <span className="text-muted-foreground">Allocated</span>
+          <span className="font-medium tabular-nums">
+            {formatCurrency(allocated, draft.currency)}
+            {monthlyIncome > 0 && (
+              <span className="font-normal text-muted-foreground">
+                {" "}
+                of {formatCurrency(monthlyIncome, draft.currency)}
+              </span>
+            )}
+          </span>
         </div>
-      )}
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="savings-target">Savings target for the month</Label>
+          <MoneyInput
+            id="savings-target"
+            currency={draft.currency}
+            className="h-10 sm:w-52"
+            value={draft.savingsTarget}
+            onChange={(e) =>
+              persist({ ...draft, savingsTarget: e.target.value })
+            }
+          />
+        </div>
+      </div>
+    );
+  }
 
-      {/* Step 1 has its own "Get started" call to action, so the Back/Continue
-          footer would only repeat it. */}
-      {draft.step > 1 && draft.step < 6 && (
-        <div className="flex justify-between">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => goToStep(draft.step - 1)}
-          >
-            Back
-          </Button>
-          {draft.step === 5 ? (
-            <Button onClick={handleFinish} disabled={submitting}>
-              {submitting ? "Setting things up..." : "Finish setup"}
-            </Button>
-          ) : (
-            <Button onClick={handleNext}>Continue</Button>
+  return (
+    <div className="flex min-h-dvh flex-1 flex-col bg-muted/40">
+      <header className="border-b border-border bg-background">
+        <div className="mx-auto flex w-full max-w-2xl items-center justify-between gap-4 px-6 py-3.5">
+          <Link href="/">
+            <Logo />
+          </Link>
+          {!done && (
+            <Link
+              href="/dashboard"
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Skip for now
+            </Link>
           )}
         </div>
-      )}
+      </header>
+
+      <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center px-6 py-10">
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
+          {!done && (
+            <div className="mb-8 flex flex-col gap-2.5">
+              <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
+                <span>
+                  Step {step} of {TOTAL_STEPS}
+                </span>
+                <span className="tabular-nums">
+                  {percentComplete}% complete
+                </span>
+              </div>
+              <Progress value={percentComplete} />
+            </div>
+          )}
+
+          {content}
+
+          {error && (
+            <p
+              role="alert"
+              className="mt-5 rounded-lg bg-critical-surface px-3 py-2 text-sm text-critical"
+            >
+              {error}
+            </p>
+          )}
+
+          {!done && (
+            <div className="mt-8 flex items-center justify-between gap-3 border-t border-border pt-5">
+              {step > 1 ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="lg"
+                  className="h-10 px-3"
+                  onClick={() => goToStep(step - 1)}
+                >
+                  <ArrowLeft aria-hidden="true" />
+                  Back
+                </Button>
+              ) : (
+                <span />
+              )}
+              <Button
+                size="lg"
+                className="h-10 px-5"
+                disabled={submitting}
+                onClick={step === 5 ? handleFinish : handleNext}
+              >
+                {step === 1 && "Get started"}
+                {step > 1 && step < 5 && "Continue"}
+                {step === 5 &&
+                  (submitting ? "Setting things up..." : "Finish setup")}
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {!done && (
+          <p className="mt-4 text-center text-xs text-muted-foreground">
+            You can change any of this later in Settings.
+          </p>
+        )}
+      </main>
+
+      <SiteFooter />
     </div>
   );
 }

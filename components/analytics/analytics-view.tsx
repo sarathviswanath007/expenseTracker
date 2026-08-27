@@ -1,15 +1,18 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { PageContainer } from "@/components/shell/page-container";
+import {
+  MonthYearPicker,
+  PageToolbar,
+} from "@/components/shell/month-year-picker";
 import { MONTH_NAMES } from "@/lib/dates";
 import { ExpensesByCategoryChart } from "@/components/charts/expenses-by-category-chart";
 import { MonthlySpendingTrendChart } from "@/components/charts/monthly-spending-trend-chart";
@@ -51,96 +54,74 @@ export function AnalyticsView({
   }
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex items-end gap-2">
-        <div className="flex flex-col gap-1.5">
-          <Label>Month</Label>
-          <Select
-            value={String(month)}
-            onValueChange={(value) =>
-              value && changeMonthYear(Number(value), year)
-            }
-          >
-            <SelectTrigger className="w-40" aria-label="Month">
-              <SelectValue>
-                {(value) => MONTH_NAMES[Number(value) - 1]}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {MONTH_NAMES.map((name, index) => (
-                <SelectItem key={name} value={String(index + 1)}>
-                  {name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label>Year</Label>
-          <Select
-            value={String(year)}
-            onValueChange={(value) =>
-              value && changeMonthYear(month, Number(value))
-            }
-          >
-            <SelectTrigger className="w-28" aria-label="Year">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {[year - 1, year, year + 1].map((y) => (
-                <SelectItem key={y} value={String(y)}>
-                  {y}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+    <PageContainer>
+      <PageToolbar context={`Showing ${MONTH_NAMES[month - 1]} ${year}`}>
+        <MonthYearPicker month={month} year={year} onChange={changeMonthYear} />
+      </PageToolbar>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Expenses by category</CardTitle>
+            <CardDescription>
+              Where your money went in {MONTH_NAMES[month - 1]} {year}.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ExpensesByCategoryChart
+              data={expensesByCategory}
+              currency={currency}
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Monthly spending trend</CardTitle>
+            <CardDescription>The last six months of spending.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <MonthlySpendingTrendChart
+              data={spendingTrend}
+              currency={currency}
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Budget vs actual</CardTitle>
+            <CardDescription>
+              Planned against spent, per category.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <BudgetVsActualChart data={budgetVsActual} currency={currency} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Income vs expense</CardTitle>
+            <CardDescription>
+              What came in against what went out.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <IncomeVsExpenseChart data={incomeVsExpense} currency={currency} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Savings trend</CardTitle>
+            <CardDescription>What you kept each month.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <SavingsTrendChart data={savingsTrend} currency={currency} />
+          </CardContent>
+        </Card>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Expenses by category</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ExpensesByCategoryChart data={expensesByCategory} currency={currency} />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Monthly spending trend</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <MonthlySpendingTrendChart data={spendingTrend} currency={currency} />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Budget vs actual</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <BudgetVsActualChart data={budgetVsActual} currency={currency} />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Income vs expense</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <IncomeVsExpenseChart data={incomeVsExpense} currency={currency} />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Savings trend</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <SavingsTrendChart data={savingsTrend} currency={currency} />
-        </CardContent>
-      </Card>
-    </div>
+    </PageContainer>
   );
 }

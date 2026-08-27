@@ -29,16 +29,14 @@ export default async function ExpensesPage(props: PageProps<"/expenses">) {
   ]);
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col p-4 sm:p-6">
-      <ExpenseManager
-        categories={categories}
-        expenses={result.expenses}
-        total={result.total}
-        pageSize={PAGE_SIZE}
-        page={page}
-        filters={{ category, from, to, search }}
-        currency={budget?.currency ?? "USD"}
-      />
-    </div>
+    <ExpenseManager
+      categories={categories}
+      expenses={result.expenses}
+      total={result.total}
+      pageSize={PAGE_SIZE}
+      page={page}
+      filters={{ category, from, to, search }}
+      currency={budget?.currency ?? "USD"}
+    />
   );
 }

@@ -45,7 +45,7 @@ export function HeroPreview() {
             <p className="text-xs text-muted-foreground">92%</p>
           </div>
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-            <div className="h-full w-[92%] rounded-full bg-warning" />
+            <div className="h-full w-[92%] rounded-full bg-attention" />
           </div>
           <div className="mt-3 flex h-16 items-end gap-1.5">
             {BARS.map((h, i) => (
@@ -102,7 +102,7 @@ export function HeroPreview() {
                 <ArrowUpRight className="size-2.5" /> Review
               </span>
               <span className="inline-flex items-center gap-1 rounded-md bg-background px-1.5 py-0.5 text-[10px] text-muted-foreground ring-1 ring-border">
-                <ArrowDownRight className="size-2.5" /> Adjust budget
+                <ArrowDownRight className="size-2.5" /> Reset budget
               </span>
             </div>
           </div>

@@ -1,7 +1,15 @@
+import { Download } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
+import { PageContainer } from "@/components/shell/page-container";
+
 export default function ExportPage() {
   return (
-    <div className="flex flex-1 items-center justify-center p-16">
-      <p className="text-muted-foreground">Export page — coming soon.</p>
-    </div>
+    <PageContainer width="narrow" className="justify-center">
+      <EmptyState
+        icon={Download}
+        title="Exports are coming soon"
+        description="You'll be able to download your expenses, budgets, and analytics as CSV, Excel, or PDF for any month."
+      />
+    </PageContainer>
   );
 }

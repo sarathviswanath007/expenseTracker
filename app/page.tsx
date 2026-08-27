@@ -15,6 +15,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { HeroPreview } from "@/components/marketing/hero-preview";
 import { Logo } from "@/components/brand/logo";
+import { SiteFooter } from "@/components/shell/site-footer";
 
 const PROBLEMS = [
   {
@@ -104,16 +105,10 @@ export default function Home() {
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-6 py-3">
           <Logo />
           <nav className="flex items-center gap-2">
-            <Link
-              href="/login"
-              className={cn(buttonVariants({ size: "sm" }))}
-            >
+            <Link href="/login" className={cn(buttonVariants({ size: "sm" }))}>
               Log in
             </Link>
-            <Link
-              href="/signup"
-              className={cn(buttonVariants({ size: "sm" }))}
-            >
+            <Link href="/signup" className={cn(buttonVariants({ size: "sm" }))}>
               Get started
             </Link>
           </nav>
@@ -351,12 +346,7 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className="border-t border-border">
-        <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-6 py-6 text-sm text-muted-foreground">
-          <span>BudgetWise AI</span>
-          <span>Track smarter. Spend better. Save more.</span>
-        </div>
-      </footer>
+      <SiteFooter note="Track smarter. Spend better. Save more." />
     </div>
   );
 }
