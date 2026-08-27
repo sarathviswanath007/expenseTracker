@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/auth/supabase-server";
+import { reconcileIncome } from "@/lib/income-reconcile";
 import type { Currency } from "@/types/budget";
 
 export interface OnboardingIncomeInput {
@@ -82,15 +83,48 @@ export async function completeOnboarding(input: CompleteOnboardingInput) {
   const { month, year } = currentMonthYear();
 
   if (input.income.length > 0) {
-    const { error: incomeError } = await supabase.from("income").insert(
-      input.income.map((entry) => ({
-        user_id: user.id,
-        amount: entry.amount,
-        source: entry.source,
-        is_recurring: entry.isRecurring,
+    // Onboarding is reachable again after it has been completed — from
+    // /onboarding directly, or the dashboard's setup prompt. Inserting
+    // unconditionally made a second run double the recorded income, so an
+    // income source named the same as an existing one is restated instead.
+    const { data: existingIncome, error: existingIncomeError } = await supabase
+      .from("income")
+      .select("id, source")
+      .eq("user_id", user.id);
+    if (existingIncomeError) throw new Error(existingIncomeError.message);
+
+    const { updates, inserts } = reconcileIncome(
+      (existingIncome ?? []).map((row) => ({
+        id: row.id,
+        source: row.source ?? "",
       })),
+      input.income,
     );
-    if (incomeError) throw new Error(incomeError.message);
+
+    for (const entry of updates) {
+      const { error: updateError } = await supabase
+        .from("income")
+        .update({
+          amount: entry.amount,
+          source: entry.source,
+          is_recurring: entry.isRecurring,
+        })
+        .eq("id", entry.id)
+        .eq("user_id", user.id);
+      if (updateError) throw new Error(updateError.message);
+    }
+
+    if (inserts.length > 0) {
+      const { error: incomeError } = await supabase.from("income").insert(
+        inserts.map((entry) => ({
+          user_id: user.id,
+          amount: entry.amount,
+          source: entry.source,
+          is_recurring: entry.isRecurring,
+        })),
+      );
+      if (incomeError) throw new Error(incomeError.message);
+    }
   }
 
   const { error: goalsError } = await supabase
