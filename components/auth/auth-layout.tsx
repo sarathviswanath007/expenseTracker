@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { Check } from "lucide-react";
 import { Logo, LogoMark } from "@/components/brand/logo";
+import { SiteFooter } from "@/components/shell/site-footer";
 
 const POINTS = [
   "Track every expense by category and payment method",
@@ -63,24 +64,28 @@ export function AuthLayout({
         </p>
       </div>
 
-      <div className="flex flex-col items-center justify-center gap-6 p-6 sm:p-10">
-        <Link href="/" className="lg:hidden">
-          <Logo />
-        </Link>
+      <div className="flex flex-col">
+        <div className="flex flex-1 flex-col items-center justify-center gap-6 p-6 sm:p-10">
+          <Link href="/" className="lg:hidden">
+            <Logo />
+          </Link>
 
-        <div className="w-full max-w-sm">
-          <div className="mb-6 flex flex-col gap-1.5">
-            <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-            <p className="text-sm text-muted-foreground">{description}</p>
+          <div className="w-full max-w-sm">
+            <div className="mb-6 flex flex-col gap-1.5">
+              <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+              <p className="text-sm text-muted-foreground">{description}</p>
+            </div>
+            {children}
           </div>
-          {children}
+
+          {footer && (
+            <div className="w-full max-w-sm text-center text-sm text-muted-foreground">
+              {footer}
+            </div>
+          )}
         </div>
 
-        {footer && (
-          <div className="w-full max-w-sm text-center text-sm text-muted-foreground">
-            {footer}
-          </div>
-        )}
+        <SiteFooter className="border-t-0" />
       </div>
     </div>
   );

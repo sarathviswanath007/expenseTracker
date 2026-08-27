@@ -29,7 +29,12 @@ export function TransactionList({
       <div className="flex items-center justify-between gap-2">
         <h2 className="font-medium">Recent transactions</h2>
         {transactions.length > 0 && (
-          <Button render={<Link href="/expenses" />} variant="ghost" size="xs">
+          <Button
+            render={<Link href="/expenses" />}
+            nativeButton={false}
+            variant="ghost"
+            size="xs"
+          >
             View all
           </Button>
         )}
@@ -41,7 +46,11 @@ export function TransactionList({
           title="No expenses recorded yet"
           description="Start tracking your spending to unlock personalized insights."
           action={
-            <Button render={<Link href="/expenses" />} size="sm">
+            <Button
+              render={<Link href="/expenses" />}
+              nativeButton={false}
+              size="sm"
+            >
               Add your first expense
             </Button>
           }

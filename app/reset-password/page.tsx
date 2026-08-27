@@ -83,7 +83,14 @@ export default function ResetPasswordPage() {
                 required
               />
             </div>
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {error && (
+              <p
+                role="alert"
+                className="rounded-lg bg-critical-surface px-3 py-2 text-sm text-critical"
+              >
+                {error}
+              </p>
+            )}
             <Button type="submit" disabled={loading} className="w-full">
               {loading ? "Saving..." : "Save new password"}
             </Button>

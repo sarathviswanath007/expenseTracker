@@ -30,17 +30,15 @@ export default async function AnalyticsPage(props: PageProps<"/analytics">) {
   ]);
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col p-4 sm:p-6">
-      <AnalyticsView
-        month={month}
-        year={year}
-        currency={budget?.currency ?? "USD"}
-        expensesByCategory={expensesByCategory}
-        budgetVsActual={budgetVsActual}
-        spendingTrend={spendingTrend}
-        incomeVsExpense={incomeVsExpense}
-        savingsTrend={savingsTrend}
-      />
-    </div>
+    <AnalyticsView
+      month={month}
+      year={year}
+      currency={budget?.currency ?? "USD"}
+      expensesByCategory={expensesByCategory}
+      budgetVsActual={budgetVsActual}
+      spendingTrend={spendingTrend}
+      incomeVsExpense={incomeVsExpense}
+      savingsTrend={savingsTrend}
+    />
   );
 }

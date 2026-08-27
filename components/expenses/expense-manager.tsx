@@ -2,9 +2,15 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Filter, Plus, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { MoneyInput } from "@/components/ui/money-input";
+import { EmptyState } from "@/components/ui/empty-state";
+import { useToast } from "@/components/ui/toast";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageContainer } from "@/components/shell/page-container";
 import {
   Select,
   SelectContent,
@@ -78,6 +84,7 @@ export function ExpenseManager({
   };
 }) {
   const router = useRouter();
+  const { toast } = useToast();
   const [form, setForm] = useState<FormState>(() =>
     emptyForm(categories[0] ?? ""),
   );
@@ -137,6 +144,7 @@ export function ExpenseManager({
         description: form.description.trim() || null,
       });
       setForm(emptyForm(categories[0] ?? ""));
+      toast("Expense added.");
       router.refresh();
     } catch (err) {
       setFormErrors({
@@ -177,6 +185,7 @@ export function ExpenseManager({
         description: editForm.description.trim() || null,
       });
       cancelEdit();
+      toast("Expense updated.");
       router.refresh();
     } catch (err) {
       setActionError(
@@ -193,6 +202,7 @@ export function ExpenseManager({
     setActionError(null);
     try {
       await deleteExpense(id);
+      toast("Expense deleted.");
       router.refresh();
     } catch (err) {
       setActionError(
@@ -205,349 +215,434 @@ export function ExpenseManager({
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
+  const hasFilters = Boolean(
+    filters.category || filters.from || filters.to || filters.search,
+  );
+
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex flex-col gap-3 rounded-lg border p-4">
-        <h2 className="font-medium">Add an expense</h2>
-        <div className="flex flex-wrap items-end gap-2">
-          <div className="flex w-28 flex-col gap-1.5">
-            <Label>Amount</Label>
-            <Input
-              type="number"
-              min="0"
-              value={form.amount}
-              onChange={(e) => setForm({ ...form, amount: e.target.value })}
-            />
-            {formErrors.amount && (
-              <p className="text-xs text-destructive">{formErrors.amount}</p>
-            )}
-          </div>
-          <div className="flex w-40 flex-col gap-1.5">
-            <Label>Category</Label>
-            <Select
-              value={form.category}
-              onValueChange={(value) =>
-                setForm({ ...form, category: value ?? "" })
-              }
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((c) => (
-                  <SelectItem key={c} value={c}>
-                    {c}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {formErrors.category && (
-              <p className="text-xs text-destructive">{formErrors.category}</p>
-            )}
-          </div>
-          <div className="flex w-40 flex-col gap-1.5">
-            <Label>Date</Label>
-            <Input
-              type="date"
-              value={form.date}
-              onChange={(e) => setForm({ ...form, date: e.target.value })}
-            />
-            {formErrors.date && (
-              <p className="text-xs text-destructive">{formErrors.date}</p>
-            )}
-          </div>
-          <div className="flex w-40 flex-col gap-1.5">
-            <Label>Payment method</Label>
-            <Select
-              value={form.paymentMethod}
-              onValueChange={(value) =>
-                setForm({ ...form, paymentMethod: value ?? PAYMENT_METHODS[0] })
-              }
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PAYMENT_METHODS.map((m) => (
-                  <SelectItem key={m} value={m}>
-                    {m}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex flex-1 min-w-40 flex-col gap-1.5">
-            <Label>Description</Label>
-            <Input
-              value={form.description}
-              onChange={(e) =>
-                setForm({ ...form, description: e.target.value })
-              }
-              placeholder="e.g. Dinner with friends"
-            />
-          </div>
-          <Button onClick={handleAdd} disabled={submitting}>
-            {submitting ? "Adding..." : "Add expense"}
-          </Button>
-        </div>
-      </div>
-
-      <div className="flex flex-wrap items-end gap-2">
-        <div className="flex w-40 flex-col gap-1.5">
-          <Label>Category</Label>
-          <Select
-            value={filterCategory || "all"}
-            onValueChange={(value) =>
-              setFilterCategory(!value || value === "all" ? "" : value)
-            }
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue>
-                {(value) =>
-                  !value || value === "all" ? "All categories" : String(value)
+    <PageContainer>
+      <Card>
+        <CardHeader>
+          <CardTitle>Add an expense</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="flex w-28 flex-col gap-1.5">
+              <Label htmlFor="expense-amount">Amount</Label>
+              <MoneyInput
+                id="expense-amount"
+                currency={currency}
+                value={form.amount}
+                onChange={(e) => setForm({ ...form, amount: e.target.value })}
+              />
+            </div>
+            <div className="flex w-40 flex-col gap-1.5">
+              <Label htmlFor="expense-category">Category</Label>
+              <Select
+                value={form.category}
+                onValueChange={(value) =>
+                  setForm({ ...form, category: value ?? "" })
                 }
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All categories</SelectItem>
-              {categories.map((c) => (
-                <SelectItem key={c} value={c}>
-                  {c}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex w-36 flex-col gap-1.5">
-          <Label>From</Label>
-          <Input
-            type="date"
-            value={filterFrom}
-            onChange={(e) => setFilterFrom(e.target.value)}
-          />
-        </div>
-        <div className="flex w-36 flex-col gap-1.5">
-          <Label>To</Label>
-          <Input
-            type="date"
-            value={filterTo}
-            onChange={(e) => setFilterTo(e.target.value)}
-          />
-        </div>
-        <div className="flex flex-1 min-w-40 flex-col gap-1.5">
-          <Label>Search description</Label>
-          <Input
-            value={filterSearch}
-            onChange={(e) => setFilterSearch(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") applyFilters();
-            }}
-          />
-        </div>
-        <Button type="button" variant="outline" onClick={applyFilters}>
-          Apply filters
-        </Button>
-        <Button type="button" variant="ghost" onClick={clearFilters}>
-          Clear
-        </Button>
-      </div>
+              >
+                <SelectTrigger id="expense-category" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex w-40 flex-col gap-1.5">
+              <Label htmlFor="expense-date">Date</Label>
+              <Input
+                id="expense-date"
+                type="date"
+                value={form.date}
+                onChange={(e) => setForm({ ...form, date: e.target.value })}
+              />
+            </div>
+            <div className="flex w-40 flex-col gap-1.5">
+              <Label htmlFor="expense-payment">Payment method</Label>
+              <Select
+                value={form.paymentMethod}
+                onValueChange={(value) =>
+                  setForm({
+                    ...form,
+                    paymentMethod: value ?? PAYMENT_METHODS[0],
+                  })
+                }
+              >
+                <SelectTrigger id="expense-payment" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PAYMENT_METHODS.map((m) => (
+                    <SelectItem key={m} value={m}>
+                      {m}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex min-w-40 flex-1 flex-col gap-1.5">
+              <Label htmlFor="expense-description">Description</Label>
+              <Input
+                id="expense-description"
+                value={form.description}
+                onChange={(e) =>
+                  setForm({ ...form, description: e.target.value })
+                }
+                placeholder="e.g. Dinner with friends"
+              />
+            </div>
+            <Button onClick={handleAdd} disabled={submitting}>
+              <Plus aria-hidden="true" />
+              {submitting ? "Adding..." : "Add expense"}
+            </Button>
+          </div>
 
-      {actionError && <p className="text-sm text-destructive">{actionError}</p>}
+          {(formErrors.amount || formErrors.category || formErrors.date) && (
+            <p
+              role="alert"
+              className="mt-3 rounded-lg bg-critical-surface px-3 py-2 text-sm text-critical"
+            >
+              {formErrors.amount ?? formErrors.category ?? formErrors.date}
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b text-left text-muted-foreground">
-              <th className="py-2 pr-2">Date</th>
-              <th className="py-2 pr-2">Category</th>
-              <th className="py-2 pr-2">Amount</th>
-              <th className="py-2 pr-2">Payment</th>
-              <th className="py-2 pr-2">Description</th>
-              <th className="py-2 pr-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {expenses.length === 0 && (
-              <tr>
-                <td colSpan={6} className="py-6 text-center text-muted-foreground">
-                  No expenses found.
-                </td>
-              </tr>
-            )}
-            {expenses.map((expense) => {
-              const isEditing = editingId === expense.id && editForm;
-              return (
-                <tr key={expense.id} className="border-b align-top">
-                  {isEditing ? (
-                    <>
-                      <td className="py-2 pr-2">
-                        <Input
-                          type="date"
-                          className="w-36"
-                          value={editForm!.date}
-                          onChange={(e) =>
-                            setEditForm({ ...editForm!, date: e.target.value })
-                          }
-                        />
-                        {editErrors.date && (
-                          <p className="text-xs text-destructive">
-                            {editErrors.date}
-                          </p>
-                        )}
-                      </td>
-                      <td className="py-2 pr-2">
-                        <Select
-                          value={editForm!.category}
-                          onValueChange={(value) =>
-                            setEditForm({ ...editForm!, category: value ?? "" })
-                          }
-                        >
-                          <SelectTrigger className="w-36">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {categories.map((c) => (
-                              <SelectItem key={c} value={c}>
-                                {c}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </td>
-                      <td className="py-2 pr-2">
-                        <Input
-                          type="number"
-                          min="0"
-                          className="w-24"
-                          value={editForm!.amount}
-                          onChange={(e) =>
-                            setEditForm({ ...editForm!, amount: e.target.value })
-                          }
-                        />
-                        {editErrors.amount && (
-                          <p className="text-xs text-destructive">
-                            {editErrors.amount}
-                          </p>
-                        )}
-                      </td>
-                      <td className="py-2 pr-2">
-                        <Select
-                          value={editForm!.paymentMethod}
-                          onValueChange={(value) =>
-                            setEditForm({
-                              ...editForm!,
-                              paymentMethod: value ?? PAYMENT_METHODS[0],
-                            })
-                          }
-                        >
-                          <SelectTrigger className="w-36">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {PAYMENT_METHODS.map((m) => (
-                              <SelectItem key={m} value={m}>
-                                {m}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </td>
-                      <td className="py-2 pr-2">
-                        <Input
-                          value={editForm!.description}
-                          onChange={(e) =>
-                            setEditForm({
-                              ...editForm!,
-                              description: e.target.value,
-                            })
-                          }
-                        />
-                      </td>
-                      <td className="flex gap-2 py-2 pr-2">
-                        <Button
-                          type="button"
-                          size="sm"
-                          onClick={() => handleSaveEdit(expense.id)}
-                          disabled={busyId === expense.id}
-                        >
-                          Save
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="ghost"
-                          onClick={cancelEdit}
-                        >
-                          Cancel
-                        </Button>
-                      </td>
-                    </>
-                  ) : (
-                    <>
-                      <td className="py-2 pr-2 whitespace-nowrap">
-                        {expense.expenseDate}
-                      </td>
-                      <td className="py-2 pr-2">{expense.category}</td>
-                      <td className="py-2 pr-2 tabular-nums">
-                        {formatCurrency(expense.amount, currency)}
-                      </td>
-                      <td className="py-2 pr-2">{expense.paymentMethod}</td>
-                      <td className="py-2 pr-2">{expense.description}</td>
-                      <td className="py-2 pr-2">
-                        <div className="flex gap-2">
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => startEdit(expense)}
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleDelete(expense.id)}
-                            disabled={busyId === expense.id}
-                          >
-                            Delete
-                          </Button>
-                        </div>
-                      </td>
-                    </>
-                  )}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Filter
+              className="size-4 text-muted-foreground"
+              aria-hidden="true"
+            />
+            Filters
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="flex w-40 flex-col gap-1.5">
+              <Label htmlFor="filter-category">Category</Label>
+              <Select
+                value={filterCategory || "all"}
+                onValueChange={(value) =>
+                  setFilterCategory(!value || value === "all" ? "" : value)
+                }
+              >
+                <SelectTrigger id="filter-category" className="w-full">
+                  <SelectValue>
+                    {(value) =>
+                      !value || value === "all"
+                        ? "All categories"
+                        : String(value)
+                    }
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All categories</SelectItem>
+                  {categories.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex w-36 flex-col gap-1.5">
+              <Label htmlFor="filter-from">From</Label>
+              <Input
+                id="filter-from"
+                type="date"
+                value={filterFrom}
+                onChange={(e) => setFilterFrom(e.target.value)}
+              />
+            </div>
+            <div className="flex w-36 flex-col gap-1.5">
+              <Label htmlFor="filter-to">To</Label>
+              <Input
+                id="filter-to"
+                type="date"
+                value={filterTo}
+                onChange={(e) => setFilterTo(e.target.value)}
+              />
+            </div>
+            <div className="flex min-w-40 flex-1 flex-col gap-1.5">
+              <Label htmlFor="filter-search">Search description</Label>
+              <Input
+                id="filter-search"
+                value={filterSearch}
+                onChange={(e) => setFilterSearch(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") applyFilters();
+                }}
+                placeholder="e.g. groceries"
+              />
+            </div>
+            <Button type="button" variant="outline" onClick={applyFilters}>
+              Apply
+            </Button>
+            <Button type="button" variant="ghost" onClick={clearFilters}>
+              Clear
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          Page {page} of {totalPages} ({total} total)
+      {actionError && (
+        <p
+          role="alert"
+          className="rounded-lg bg-critical-surface px-3 py-2 text-sm text-critical"
+        >
+          {actionError}
         </p>
-        <div className="flex gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => goToPage(page - 1)}
-            disabled={page <= 1}
-          >
-            Previous
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => goToPage(page + 1)}
-            disabled={page >= totalPages}
-          >
-            Next
-          </Button>
-        </div>
-      </div>
-    </div>
+      )}
+
+      {expenses.length === 0 ? (
+        <EmptyState
+          icon={Receipt}
+          title={hasFilters ? "No matching expenses" : "No expenses yet"}
+          description={
+            hasFilters
+              ? "Nothing matches these filters. Try widening the date range or clearing them."
+              : "Add your first expense above and it will show up here, ready to filter and edit."
+          }
+          action={
+            hasFilters ? (
+              <Button type="button" variant="outline" onClick={clearFilters}>
+                Clear filters
+              </Button>
+            ) : undefined
+          }
+        />
+      ) : (
+        <Card className="gap-0 py-0">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/50 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                  <th className="px-4 py-2.5 font-medium">Date</th>
+                  <th className="px-4 py-2.5 font-medium">Category</th>
+                  <th className="px-4 py-2.5 font-medium">Amount</th>
+                  <th className="px-4 py-2.5 font-medium">Payment</th>
+                  <th className="px-4 py-2.5 font-medium">Description</th>
+                  <th className="px-4 py-2.5 text-right font-medium">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {expenses.map((expense) => {
+                  const isEditing = editingId === expense.id && editForm;
+                  return (
+                    <tr
+                      key={expense.id}
+                      className="align-middle transition-colors hover:bg-muted/40"
+                    >
+                      {isEditing ? (
+                        <>
+                          <td className="px-4 py-2.5">
+                            <Input
+                              type="date"
+                              className="w-36"
+                              value={editForm!.date}
+                              onChange={(e) =>
+                                setEditForm({
+                                  ...editForm!,
+                                  date: e.target.value,
+                                })
+                              }
+                              aria-label="Expense date"
+                            />
+                            {editErrors.date && (
+                              <p className="mt-1 text-xs text-critical">
+                                {editErrors.date}
+                              </p>
+                            )}
+                          </td>
+                          <td className="px-4 py-2.5">
+                            <Select
+                              value={editForm!.category}
+                              onValueChange={(value) =>
+                                setEditForm({
+                                  ...editForm!,
+                                  category: value ?? "",
+                                })
+                              }
+                            >
+                              <SelectTrigger
+                                className="w-36"
+                                aria-label="Category"
+                              >
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {categories.map((c) => (
+                                  <SelectItem key={c} value={c}>
+                                    {c}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </td>
+                          <td className="px-4 py-2.5">
+                            <MoneyInput
+                              className="w-28"
+                              currency={currency}
+                              value={editForm!.amount}
+                              onChange={(e) =>
+                                setEditForm({
+                                  ...editForm!,
+                                  amount: e.target.value,
+                                })
+                              }
+                              aria-label="Amount"
+                            />
+                            {editErrors.amount && (
+                              <p className="mt-1 text-xs text-critical">
+                                {editErrors.amount}
+                              </p>
+                            )}
+                          </td>
+                          <td className="px-4 py-2.5">
+                            <Select
+                              value={editForm!.paymentMethod}
+                              onValueChange={(value) =>
+                                setEditForm({
+                                  ...editForm!,
+                                  paymentMethod: value ?? PAYMENT_METHODS[0],
+                                })
+                              }
+                            >
+                              <SelectTrigger
+                                className="w-36"
+                                aria-label="Payment method"
+                              >
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {PAYMENT_METHODS.map((m) => (
+                                  <SelectItem key={m} value={m}>
+                                    {m}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </td>
+                          <td className="px-4 py-2.5">
+                            <Input
+                              value={editForm!.description}
+                              onChange={(e) =>
+                                setEditForm({
+                                  ...editForm!,
+                                  description: e.target.value,
+                                })
+                              }
+                              aria-label="Description"
+                            />
+                          </td>
+                          <td className="px-4 py-2.5">
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                type="button"
+                                size="sm"
+                                onClick={() => handleSaveEdit(expense.id)}
+                                disabled={busyId === expense.id}
+                              >
+                                Save
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                onClick={cancelEdit}
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td className="px-4 py-2.5 whitespace-nowrap text-muted-foreground">
+                            {expense.expenseDate}
+                          </td>
+                          <td className="px-4 py-2.5 font-medium">
+                            {expense.category}
+                          </td>
+                          <td className="px-4 py-2.5 tabular-nums">
+                            {formatCurrency(expense.amount, currency)}
+                          </td>
+                          <td className="px-4 py-2.5 text-muted-foreground">
+                            {expense.paymentMethod}
+                          </td>
+                          <td className="px-4 py-2.5 text-muted-foreground">
+                            {expense.description}
+                          </td>
+                          <td className="px-4 py-2.5">
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => startEdit(expense)}
+                              >
+                                Edit
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleDelete(expense.id)}
+                                disabled={busyId === expense.id}
+                              >
+                                Delete
+                              </Button>
+                            </div>
+                          </td>
+                        </>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="flex items-center justify-between gap-3 border-t border-border px-4 py-3">
+            <p className="text-sm text-muted-foreground">
+              Page {page} of {totalPages}
+              <span className="hidden sm:inline"> · {total} expenses</span>
+            </p>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => goToPage(page - 1)}
+                disabled={page <= 1}
+              >
+                Previous
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => goToPage(page + 1)}
+                disabled={page >= totalPages}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        </Card>
+      )}
+    </PageContainer>
   );
 }

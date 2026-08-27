@@ -388,3 +388,84 @@ export async function copyPreviousMonthBudget(month: number, year: number) {
   revalidatePath("/budgets");
   revalidatePath("/dashboard");
 }
+
+export interface IncomeInput {
+  source: string;
+  amount: number;
+  isRecurring: boolean;
+  incomeDate: string;
+}
+
+export interface IncomeRecord extends IncomeInput {
+  id: string;
+}
+
+/** Every income row on the account, newest first. */
+export async function listIncome(): Promise<IncomeRecord[]> {
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data, error } = await supabase
+    .from("income")
+    .select("id, source, amount, is_recurring, income_date")
+    .eq("user_id", user.id)
+    .order("income_date", { ascending: false });
+  if (error) throw new Error(error.message);
+
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    source: row.source ?? "",
+    amount: Number(row.amount),
+    isRecurring: row.is_recurring,
+    incomeDate: row.income_date,
+  }));
+}
+
+export async function createIncome(input: IncomeInput) {
+  const { supabase, user } = await requireUser();
+  const { error } = await supabase.from("income").insert({
+    user_id: user.id,
+    source: input.source,
+    amount: input.amount,
+    is_recurring: input.isRecurring,
+    income_date: input.incomeDate,
+  });
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/budgets");
+  revalidatePath("/dashboard");
+}
+
+export async function updateIncome(id: string, input: IncomeInput) {
+  const { supabase, user } = await requireUser();
+  const { error } = await supabase
+    .from("income")
+    .update({
+      source: input.source,
+      amount: input.amount,
+      is_recurring: input.isRecurring,
+      income_date: input.incomeDate,
+    })
+    .eq("id", id)
+    .eq("user_id", user.id);
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/budgets");
+  revalidatePath("/dashboard");
+}
+
+export async function deleteIncome(id: string) {
+  const { supabase, user } = await requireUser();
+  const { error } = await supabase
+    .from("income")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id);
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/budgets");
+  revalidatePath("/dashboard");
+}
